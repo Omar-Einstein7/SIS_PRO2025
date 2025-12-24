@@ -141,7 +141,7 @@ namespace SIS {
                     "CREATE TABLE IF NOT EXISTS academic_calendar ( calendar_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, academic_year_id INT, semester_id INT, event_title VARCHAR(100), event_type VARCHAR(50), start_date DATE, end_date DATE ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
                     
                     // 2. People & Auth
-                    "CREATE TABLE IF NOT EXISTS system_user ( user_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(100) UNIQUE, password_hash VARCHAR(255), user_type VARCHAR(20) ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS system_user ( user_id INT NOT NULL PRIMARY KEY, username VARCHAR(100) UNIQUE, password_hash VARCHAR(255), user_type VARCHAR(20) ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
                     "CREATE TABLE IF NOT EXISTS administration_users ( admin_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, full_name VARCHAR(100) NOT NULL, email VARCHAR(100) NOT NULL, role VARCHAR(50) ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
                     "CREATE TABLE IF NOT EXISTS instructors ( instructor_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, full_name VARCHAR(100), instructor_type VARCHAR(20), specialization VARCHAR(50), email VARCHAR(100), phone VARCHAR(15), faculty_id INT, department_id INT, hire_date DATE ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
                     "CREATE TABLE IF NOT EXISTS students ( student_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, full_name VARCHAR(100), national_id VARCHAR(20), email VARCHAR(100), phone VARCHAR(15), academic_year_id INT, semester_id INT, academic_level_id INT, faculty_id INT, department_id INT, group_number VARCHAR(10), section_number VARCHAR(10), enrollment_date DATE, GPA DECIMAL(3,2), final_grade VARCHAR(2) ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
@@ -1212,12 +1212,13 @@ namespace SIS {
         }
 
         // Add a new user to the system_user table
-        inline static bool AddSystemUser(String^ username, String^ password, String^ userType) {
+        inline static bool AddSystemUser(int userId, String^ username, String^ password, String^ userType) {
             String^ hashedPassword = HashPassword(password);
             try {
                 auto c = OpenConn();
                 auto cmd = gcnew MySqlCommand(
-                    "INSERT INTO system_user(username, password_hash, user_type) VALUES(@u, @p, @ut)", c);
+                    "INSERT INTO system_user(user_id, username, password_hash, user_type) VALUES(@id, @u, @p, @ut)", c);
+                cmd->Parameters->AddWithValue("@id", userId);
                 cmd->Parameters->AddWithValue("@u", username);
                 cmd->Parameters->AddWithValue("@p", hashedPassword);
                 cmd->Parameters->AddWithValue("@ut", userType);
@@ -1247,12 +1248,13 @@ namespace SIS {
             return list;
         }
 
-        inline static bool AddUser(String^ username, String^ password, String^ userType) {
+        inline static bool AddUser(int userId, String^ username, String^ password, String^ userType) {
             String^ hashedPassword = HashPassword(password);
             try {
                 auto c = OpenConn();
                 auto cmd = gcnew MySqlCommand(
-                    "INSERT INTO system_user (username, password_hash, user_type) VALUES (@u, @p, @t)", c);
+                    "INSERT INTO system_user (user_id, username, password_hash, user_type) VALUES (@id, @u, @p, @t)", c);
+                cmd->Parameters->AddWithValue("@id", userId);
                 cmd->Parameters->AddWithValue("@u", username);
                 cmd->Parameters->AddWithValue("@p", hashedPassword);
                 cmd->Parameters->AddWithValue("@t", userType);

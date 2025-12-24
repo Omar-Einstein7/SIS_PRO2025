@@ -282,9 +282,9 @@ Class SIS.DataManager: AutoLayout, AnsiClass, Class, Public, Sealed, BeforeField
     GetCourseCount(): PrivateScope, Public, Static, HideBySig
     GetInstructorCount(): PrivateScope, Public, Static, HideBySig
     HashPassword(String): PrivateScope, Public, Static, HideBySig
-    AddSystemUser(String, String, String): PrivateScope, Public, Static, HideBySig
+    AddSystemUser(Int32, String, String, String): PrivateScope, Public, Static, HideBySig
     GetAllUsers(): PrivateScope, Public, Static, HideBySig
-    AddUser(String, String, String): PrivateScope, Public, Static, HideBySig
+    AddUser(Int32, String, String, String): PrivateScope, Public, Static, HideBySig
     UpdateUser(Int32, String, String, String): PrivateScope, Public, Static, HideBySig
     UpdateUser(Int32, String, String): PrivateScope, Public, Static, HideBySig
     DeleteUser(Int32): PrivateScope, Public, Static, HideBySig
