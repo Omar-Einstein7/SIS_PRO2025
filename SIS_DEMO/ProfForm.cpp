@@ -1,6 +1,7 @@
 #include "ProfForm.h"
 #include "EnterGradesForm.h"
 #include "GradesListForm.h"
+#include "TakeAttendanceForm.h"
 
 using namespace SISDEMO;
 using namespace System;
@@ -26,6 +27,18 @@ System::Void ProfForm::btnViewGrades_Click(System::Object^ sender, System::Event
     }
     catch (Exception^ ex) {
         MessageBox::Show(String::Format("Failed to open View Grades: {0}", ex->ToString()),
+            "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+    }
+}
+
+System::Void ProfForm::btnAttendance_Click(System::Object^ sender, System::EventArgs^ e)
+{
+    try {
+        TakeAttendanceForm^ f = gcnew TakeAttendanceForm(this->profId);
+        f->ShowDialog();
+    }
+    catch (Exception^ ex) {
+        MessageBox::Show(String::Format("Failed to open Attendance: {0}", ex->ToString()),
             "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
     }
 }

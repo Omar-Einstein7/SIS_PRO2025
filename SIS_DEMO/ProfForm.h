@@ -11,6 +11,7 @@ namespace SISDEMO {
     // forward-declare other managed forms so header is lightweight for the designer
     ref class EnterGradesForm;
     ref class GradesListForm;
+    ref class TakeAttendanceForm;
 
     using namespace System;
     using namespace System::ComponentModel;
@@ -37,7 +38,7 @@ namespace SISDEMO {
         ProfForm(int id)
         {
             InitializeComponent();
-            this->profId = SIS::DataManager::GetInstructorIdByUserId(id);
+            this->profId = SIS::DataManager::GetProfessorIdByUserId(id);
             ApplyModernTheme();
             LoadDashboard();
         }
@@ -72,21 +73,12 @@ namespace SISDEMO {
         void LoadDashboard() {
             pnlContent->Controls->Clear();
             
-            // Get grades for this professor to count students/courses
-            System::Collections::Generic::List<System::String^>^ grades = SIS::DataManager::ReadGradesByProfessor(this->profId);
-            System::Collections::Generic::List<System::String^>^ uniqueStudents = gcnew System::Collections::Generic::List<System::String^>();
-            System::Collections::Generic::List<System::String^>^ uniqueCourses = gcnew System::Collections::Generic::List<System::String^>();
+            // Get all students and courses for this professor (including those without grades)
+            System::Collections::Generic::List<System::String^>^ students = SIS::DataManager::ReadStudentsByProfessor(this->profId);
+            System::Collections::Generic::List<System::String^>^ courses = SIS::DataManager::ReadCoursesByProfessor(this->profId);
 
-            for each (System::String^ g in grades) {
-                array<System::String^>^ p = g->Split(',');
-                if (p->Length >= 2) {
-                    if (!uniqueStudents->Contains(p[0])) uniqueStudents->Add(p[0]);
-                    if (!uniqueCourses->Contains(p[1])) uniqueCourses->Add(p[1]);
-                }
-            }
-
-            pnlContent->Controls->Add(CreateStatCard("My Students", uniqueStudents->Count.ToString(), 0));
-            pnlContent->Controls->Add(CreateStatCard("My Courses", uniqueCourses->Count.ToString(), 1));
+            pnlContent->Controls->Add(CreateStatCard("My Students", students->Count.ToString(), 0));
+            pnlContent->Controls->Add(CreateStatCard("My Courses", courses->Count.ToString(), 1));
         }
 
     private:
@@ -251,10 +243,8 @@ namespace SISDEMO {
 
            // keep signatures only in header � implementations moved to .cpp
     private: System::Void btnEnterGrades_Click(System::Object^ sender, System::EventArgs^ e);
-    private: System::Void btnAttendance_Click(System::Object^ sender, System::EventArgs^ e) {
-        MessageBox::Show("Attendance form (placeholder)", "Professor", MessageBoxButtons::OK, MessageBoxIcon::Information);
-    }
-  private: System::Void btnViewGrades_Click(System::Object^ sender, System::EventArgs^ e);
+    private: System::Void btnAttendance_Click(System::Object^ sender, System::EventArgs^ e);
+    private: System::Void btnViewGrades_Click(System::Object^ sender, System::EventArgs^ e);
     private: System::Void btnClose_Click(System::Object^ sender, System::EventArgs^ e) {
         if (MessageBox::Show("Are you sure you want to logout?", "Logout", MessageBoxButtons::YesNo, MessageBoxIcon::Question) == System::Windows::Forms::DialogResult::Yes) {
             this->Close();

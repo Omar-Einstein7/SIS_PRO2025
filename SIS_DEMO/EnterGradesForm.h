@@ -41,16 +41,16 @@ namespace SISDEMO {
     private:
         void LoadMetaData() {
             this->cmbStudent->Items->Clear();
-            List<String^>^ students = SIS::DataManager::ReadAllStudents();
-            for each (String^ s in students) {
-                array<String^>^ p = s->Split(',');
+            List<String^>^ students = SIS::DataManager::ReadStudentsByProfessor(this->profId);
+            for (int i = 0; i < students->Count; i++) {
+                array<String^>^ p = students[i]->Split(',');
                 if (p->Length >= 2) this->cmbStudent->Items->Add(p[0] + " - " + p[1]);
             }
 
             this->cmbCourse->Items->Clear();
-            List<String^>^ courses = SIS::DataManager::ReadAllCourses();
-            for each (String^ s in courses) {
-                array<String^>^ p = s->Split(',');
+            List<String^>^ courses = SIS::DataManager::ReadCoursesByProfessor(this->profId);
+            for (int i = 0; i < courses->Count; i++) {
+                array<String^>^ p = courses[i]->Split(',');
                 if (p->Length >= 2) this->cmbCourse->Items->Add(p[0] + " - " + p[1]);
             }
 

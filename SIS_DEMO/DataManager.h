@@ -251,7 +251,7 @@ namespace SIS {
                         "INSERT INTO system_user (user_id, username, password_hash, user_type) VALUES (1, 'admin', '" + HashPassword("admin123") + "', 'Admin');",
                         "INSERT INTO system_user (user_id, username, password_hash, user_type) VALUES (2, 'omar', '" + HashPassword("omar123") + "', 'Student');",
                         "INSERT INTO system_user (user_id, username, password_hash, user_type) VALUES (3, 'ahmed', '" + HashPassword("ahmed123") + "', 'Student');",
-                        "INSERT INTO system_user (user_id, username, password_hash, user_type) VALUES (4, 'mohamed', '" + HashPassword("mohamed123") + "', 'Instructor');",
+                        "INSERT INTO system_user (user_id, username, password_hash, user_type) VALUES (4, 'mohamed', '" + HashPassword("mohamed123") + "', 'Professor');",
                         "INSERT INTO system_user (user_id, username, password_hash, user_type) VALUES (5, 'sara', '" + HashPassword("sara123") + "', 'Student');"
                     };
                     for each (String^ q in queries) (gcnew MySqlCommand(q, c))->ExecuteNonQuery();
@@ -262,6 +262,15 @@ namespace SIS {
                     array<String^>^ queries = {
                         "INSERT INTO students (student_id, full_name, national_id, email, phone, academic_year_id, semester_id, academic_level_id, faculty_id, department_id, group_number, section_number, enrollment_date, GPA, final_grade) VALUES (1, 'Ahmed Hassan Ali', '30101010000001', 'ahmed1@gmail.com', '01010000001', 1, 1, 1, 1, 1, '1', '1', '2021-09-15', 3.10, 'B');",
                         "INSERT INTO students (student_id, full_name, national_id, email, phone, academic_year_id, semester_id, academic_level_id, faculty_id, department_id, group_number, section_number, enrollment_date, GPA, final_grade) VALUES (4, 'Omar Yasser Khidr', '30101010000003', 'omar1@gmail.com', '01010000003', 1, 2, 1, 2, 4, '2', '1', '2021-09-15', 3.80, 'A');"
+                    };
+                    for each (String^ q in queries) (gcnew MySqlCommand(q, c))->ExecuteNonQuery();
+                }
+
+                // 8. Sample Professors
+                if (Convert::ToInt32((gcnew MySqlCommand("SELECT COUNT(*) FROM instructors", c))->ExecuteScalar()) == 0) {
+                    array<String^>^ queries = {
+                        "INSERT INTO instructors (instructor_id, full_name, email, phone, specialization, faculty_id, department_id, hire_date) VALUES (4, 'Dr. Mohamed Ramadan', 'mohamed.ramadan@uni.edu', '01090000001', 'Software Engineering', 1, 1, '2018-09-01');",
+                        "INSERT INTO instructors (instructor_id, full_name, email, phone, specialization, faculty_id, department_id, hire_date) VALUES (6, 'Dr. Karim Mostafa', 'karim.mostafa@uni.edu', '01090000006', 'Cyber Security', 2, 5, '2022-10-01');"
                     };
                     for each (String^ q in queries) (gcnew MySqlCommand(q, c))->ExecuteNonQuery();
                 }
@@ -328,7 +337,7 @@ namespace SIS {
             } catch(...) { return nullptr; }
         }
 
-        inline static int GetInstructorIdByUserId(int userId) {
+        inline static int GetProfessorIdByUserId(int userId) {
             try {
                 auto c = OpenConn();
                 auto cmd = gcnew MySqlCommand("SELECT instructor_id FROM instructors WHERE instructor_id=@uid", c);
@@ -535,7 +544,7 @@ namespace SIS {
                     // 1. Insert into system_user - force user_id to match profId
                     String^ hashedPassword = HashPassword(password);
                     auto cmdUser = gcnew MySqlCommand(
-                        "INSERT INTO system_user(user_id, username, password_hash, user_type) VALUES(@pid, @u, @p, 'Instructor')", c, trans);
+                        "INSERT INTO system_user(user_id, username, password_hash, user_type) VALUES(@pid, @u, @p, 'Professor')", c, trans);
                     cmdUser->Parameters->AddWithValue("@pid", profId);
                     cmdUser->Parameters->AddWithValue("@u", username);
                     cmdUser->Parameters->AddWithValue("@p", hashedPassword);
@@ -751,6 +760,22 @@ namespace SIS {
         {
             try {
                 auto c = OpenConn();
+                
+                // 1. Ensure student exists in students table (foreign key requirement)
+                auto checkCmd = gcnew MySqlCommand("SELECT COUNT(*) FROM students WHERE student_id = @id", c);
+                checkCmd->Parameters->AddWithValue("@id", sid);
+                int count = Convert::ToInt32(checkCmd->ExecuteScalar());
+                
+                if (count == 0) {
+                    // Create a minimal student record if missing
+                    auto insertStud = gcnew MySqlCommand(
+                        "INSERT INTO students (student_id, full_name, enrollment_date) "
+                        "SELECT user_id, username, CURRENT_DATE FROM system_user WHERE user_id = @id", c);
+                    insertStud->Parameters->AddWithValue("@id", sid);
+                    insertStud->ExecuteNonQuery();
+                }
+
+                // 2. Register to course
                 auto cmd = gcnew MySqlCommand(
                     "INSERT INTO student_course_enrollment(student_id, course_id, academic_year_id, semester_id, enrollment_date) "
                     "VALUES(@s, @c, @y, @sem, CURRENT_DATE)", c);
@@ -883,6 +908,106 @@ namespace SIS {
                 r->Close(); c->Close();
             }
             catch (Exception^) {}
+            return list;
+        }
+
+        inline static List<String^>^ ReadStudentsByProfessor(int instructorId)
+        {
+            auto list = gcnew List<String^>();
+            try {
+                auto c = OpenConn();
+                auto cmd = gcnew MySqlCommand(
+                    "SELECT DISTINCT st.student_id, st.full_name, c.course_name "
+                    "FROM students st "
+                    "JOIN student_course_enrollment sce ON st.student_id = sce.student_id "
+                    "JOIN instructor_course_assignment ica ON sce.course_id = ica.course_id "
+                    "  AND sce.academic_year_id = ica.academic_year_id "
+                    "  AND sce.semester_id = ica.semester_id "
+                    "JOIN courses c ON sce.course_id = c.course_id "
+                    "WHERE ica.instructor_id = @iid", c);
+                cmd->Parameters->AddWithValue("@iid", instructorId);
+                auto r = cmd->ExecuteReader();
+                while (r->Read())
+                    list->Add(r["student_id"]->ToString() + "," + r["full_name"]->ToString() + "," + r["course_name"]->ToString());
+                r->Close(); c->Close();
+            }
+            catch (Exception^) {}
+            return list;
+        }
+
+        inline static List<String^>^ ReadCoursesByProfessor(int instructorId)
+        {
+            auto list = gcnew List<String^>();
+            try {
+                auto c = OpenConn();
+                auto cmd = gcnew MySqlCommand(
+                    "SELECT DISTINCT c.course_id, c.course_name "
+                    "FROM courses c "
+                    "JOIN instructor_course_assignment ica ON c.course_id = ica.course_id "
+                    "WHERE ica.instructor_id = @iid", c);
+                cmd->Parameters->AddWithValue("@iid", instructorId);
+                auto r = cmd->ExecuteReader();
+                while (r->Read())
+                    list->Add(r["course_id"]->ToString() + "," + r["course_name"]->ToString());
+                r->Close(); c->Close();
+            }
+            catch (Exception^) {}
+            return list;
+        }
+
+        inline static bool AssignCourseToProfessor(int professorId, int courseId, int yearId, int semId)
+        {
+            try {
+                auto c = OpenConn();
+                
+                // 1. Ensure professor exists in instructors table (foreign key requirement)
+                auto checkCmd = gcnew MySqlCommand("SELECT COUNT(*) FROM instructors WHERE instructor_id = @id", c);
+                checkCmd->Parameters->AddWithValue("@id", professorId);
+                int count = Convert::ToInt32(checkCmd->ExecuteScalar());
+                
+                if (count == 0) {
+                    // Create a minimal instructor record if missing
+                    auto insertProf = gcnew MySqlCommand(
+                        "INSERT INTO instructors (instructor_id, full_name, hire_date) "
+                        "SELECT user_id, username, CURRENT_DATE FROM system_user WHERE user_id = @id", c);
+                    insertProf->Parameters->AddWithValue("@id", professorId);
+                    insertProf->ExecuteNonQuery();
+                }
+
+                // 2. Assign course
+                auto cmd = gcnew MySqlCommand(
+                    "INSERT INTO instructor_course_assignment (instructor_id, course_id, academic_year_id, semester_id) "
+                    "VALUES (@iid, @cid, @yid, @sid)", c);
+                cmd->Parameters->AddWithValue("@iid", professorId);
+                cmd->Parameters->AddWithValue("@cid", courseId);
+                cmd->Parameters->AddWithValue("@yid", yearId);
+                cmd->Parameters->AddWithValue("@sid", semId);
+                cmd->ExecuteNonQuery();
+                c->Close();
+                return true;
+            }
+            catch (Exception^) { return false; }
+        }
+
+        inline static List<String^>^ ReadAllProfessorsSimple() {
+            auto list = gcnew List<String^>();
+            try {
+                auto c = OpenConn();
+                // Join system_user with instructors to get all professors
+                // This ensures that even if a professor doesn't have a full profile yet, 
+                // they still appear in the dropdown using their username.
+                auto cmd = gcnew MySqlCommand(
+                    "SELECT u.user_id, CASE WHEN i.full_name IS NULL OR i.full_name = '' THEN u.username ELSE i.full_name END as display_name "
+                    "FROM system_user u "
+                    "LEFT JOIN instructors i ON u.user_id = i.instructor_id "
+                    "WHERE u.user_type = 'Professor' "
+                    "ORDER BY u.user_id", c);
+                auto r = cmd->ExecuteReader();
+                while (r->Read())
+                    list->Add(r["user_id"]->ToString() + "," + r["display_name"]->ToString());
+                r->Close(); c->Close();
+            }
+            catch (...) {}
             return list;
         }
 
@@ -1144,6 +1269,56 @@ namespace SIS {
             return list;
         }
 
+        inline static List<String^>^ ReadStudentsByCourse(int courseId, int semesterId)
+        {
+            auto list = gcnew List<String^>();
+            try {
+                auto c = OpenConn();
+                auto cmd = gcnew MySqlCommand(
+                    "SELECT st.student_id, st.full_name "
+                    "FROM students st "
+                    "JOIN student_course_enrollment sce ON st.student_id = sce.student_id "
+                    "WHERE sce.course_id = @cid AND sce.semester_id = @sid", c);
+                cmd->Parameters->AddWithValue("@cid", courseId);
+                cmd->Parameters->AddWithValue("@sid", semesterId);
+                auto r = cmd->ExecuteReader();
+                while (r->Read())
+                    list->Add(r["student_id"]->ToString() + "," + r["full_name"]->ToString());
+                r->Close(); c->Close();
+            }
+            catch (Exception^) {}
+            return list;
+        }
+
+        inline static bool SaveAttendance(int studentId, int courseId, int semesterId, String^ date, String^ status) {
+            try {
+                auto c = OpenConn();
+                auto checkCmd = gcnew MySqlCommand(
+                    "SELECT COUNT(*) FROM attendance WHERE student_id=@sid AND course_id=@cid AND lecture_date=@date", c);
+                checkCmd->Parameters->AddWithValue("@sid", studentId);
+                checkCmd->Parameters->AddWithValue("@cid", courseId);
+                checkCmd->Parameters->AddWithValue("@date", date);
+                int count = Convert::ToInt32(checkCmd->ExecuteScalar());
+
+                MySqlCommand^ cmd;
+                if (count > 0) {
+                    cmd = gcnew MySqlCommand(
+                        "UPDATE attendance SET status=@status, semester_id=@semid WHERE student_id=@sid AND course_id=@cid AND lecture_date=@date", c);
+                } else {
+                    cmd = gcnew MySqlCommand(
+                        "INSERT INTO attendance (student_id, course_id, semester_id, lecture_date, status) VALUES (@sid, @cid, @semid, @date, @status)", c);
+                }
+                cmd->Parameters->AddWithValue("@sid", studentId);
+                cmd->Parameters->AddWithValue("@cid", courseId);
+                cmd->Parameters->AddWithValue("@semid", semesterId);
+                cmd->Parameters->AddWithValue("@date", date);
+                cmd->Parameters->AddWithValue("@status", status);
+                cmd->ExecuteNonQuery();
+                c->Close();
+                return true;
+            } catch (...) { return false; }
+        }
+
         inline static List<String^>^ ReadAllLaboratories()
         {
             auto list = gcnew List<String^>();
@@ -1193,7 +1368,7 @@ namespace SIS {
             } catch(...) { return 0; }
         }
 
-        inline static int GetInstructorCount() {
+        inline static int GetProfessorCount() {
             try {
                 auto c = OpenConn();
                 auto cmd = gcnew MySqlCommand("SELECT COUNT(*) FROM instructors", c);

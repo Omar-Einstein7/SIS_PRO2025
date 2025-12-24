@@ -235,7 +235,7 @@ Class SIS.DataManager: AutoLayout, AnsiClass, Class, Public, Sealed, BeforeField
     InsertInitialData(): PrivateScope, Public, Static, HideBySig
     GetStudentIdByUserId(Int32): PrivateScope, Public, Static, HideBySig
     GetStudentDetails(Int32): PrivateScope, Public, Static, HideBySig
-    GetInstructorIdByUserId(Int32): PrivateScope, Public, Static, HideBySig
+    GetProfessorIdByUserId(Int32): PrivateScope, Public, Static, HideBySig
     Login(String, String): PrivateScope, Public, Static, HideBySig
     AddStudent(Int32, String, String, String, String, String, String, Int32, Int32, Int32, Int32, Int32, String, String): PrivateScope, Public, Static, HideBySig
     UpdateStudent(Int32, String, String, String, String, Int32, Int32, Int32, Int32, Int32, String, String): PrivateScope, Public, Static, HideBySig
@@ -258,6 +258,10 @@ Class SIS.DataManager: AutoLayout, AnsiClass, Class, Public, Sealed, BeforeField
     ReadAllGrades(): PrivateScope, Public, Static, HideBySig
     ReadGradesForStudent(Int32): PrivateScope, Public, Static, HideBySig
     ReadGradesByProfessor(Int32): PrivateScope, Public, Static, HideBySig
+    ReadStudentsByProfessor(Int32): PrivateScope, Public, Static, HideBySig
+    ReadCoursesByProfessor(Int32): PrivateScope, Public, Static, HideBySig
+    AssignCourseToProfessor(Int32, Int32, Int32, Int32): PrivateScope, Public, Static, HideBySig
+    ReadAllProfessorsSimple(): PrivateScope, Public, Static, HideBySig
     ReadPaymentsForStudent(Int32): PrivateScope, Public, Static, HideBySig
     ReadAllNews(): PrivateScope, Public, Static, HideBySig
     AddNews(String, String, Int32): PrivateScope, Public, Static, HideBySig
@@ -276,11 +280,13 @@ Class SIS.DataManager: AutoLayout, AnsiClass, Class, Public, Sealed, BeforeField
     ReadAllLevels(): PrivateScope, Public, Static, HideBySig
     ReadScheduleForStudent(Int32): PrivateScope, Public, Static, HideBySig
     ReadAttendanceForStudent(Int32): PrivateScope, Public, Static, HideBySig
+    ReadStudentsByCourse(Int32, Int32): PrivateScope, Public, Static, HideBySig
+    SaveAttendance(Int32, Int32, Int32, String, String): PrivateScope, Public, Static, HideBySig
     ReadAllLaboratories(): PrivateScope, Public, Static, HideBySig
     ReadAllLectureHalls(): PrivateScope, Public, Static, HideBySig
     GetStudentCount(): PrivateScope, Public, Static, HideBySig
     GetCourseCount(): PrivateScope, Public, Static, HideBySig
-    GetInstructorCount(): PrivateScope, Public, Static, HideBySig
+    GetProfessorCount(): PrivateScope, Public, Static, HideBySig
     HashPassword(String): PrivateScope, Public, Static, HideBySig
     AddSystemUser(Int32, String, String, String): PrivateScope, Public, Static, HideBySig
     GetAllUsers(): PrivateScope, Public, Static, HideBySig
@@ -375,3 +381,6 @@ Class SISDEMO.StudentForm: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
 Class SISDEMO.LoginForm: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
   :System.Windows.Forms.Form
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+Class SISDEMO.TakeAttendanceForm: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
+  :System.Windows.Forms.Form
+    Void .ctor(Int32): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName

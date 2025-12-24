@@ -732,9 +732,9 @@ INSERT INTO `system_user` (`user_id`, `username`, `password_hash`, `user_type`) 
 (1, 'admin', 'hashed_admin_123', 'Admin'),
 (2, 'omar', 'hashed_omar_123', 'Student'),
 (3, 'ahmed', 'hashed_ahmed_123', 'Student'),
-(4, 'mohamed', 'hashed_mohamed_123', 'Instructor'),
+(4, 'mohamed', 'hashed_mohamed_123', 'Professor'),
 (5, 'sara', 'hashed_sara_123', 'Student'),
-(6, 'karim', 'hashed_karim_123', 'Instructor'),
+(6, 'karim', 'hashed_karim_123', 'Professor'),
 (7, 'it_admin', 'hashed_it_123', 'Staff');
 
 --

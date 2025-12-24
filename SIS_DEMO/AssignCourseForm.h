@@ -39,14 +39,6 @@ namespace SISDEMO {
             }
             if (this->cmbYear->Items->Count > 0) this->cmbYear->SelectedIndex = 0;
 
-            this->cmbStudent->Items->Clear();
-            List<String^>^ students = SIS::DataManager::ReadAllStudents();
-            for each (String^ s in students) {
-                array<String^>^ p = s->Split(',');
-                if (p->Length >= 2) this->cmbStudent->Items->Add(p[0] + " - " + p[1]);
-            }
-            if (this->cmbStudent->Items->Count > 0) this->cmbStudent->SelectedIndex = 0;
-
             this->cmbCourse->Items->Clear();
             List<String^>^ courses = SIS::DataManager::ReadAllCourses();
             for each (String^ s in courses) {
@@ -62,6 +54,33 @@ namespace SISDEMO {
                 if (p->Length >= 2) this->cmbSemester->Items->Add(p[0] + " - " + p[1]);
             }
             if (this->cmbSemester->Items->Count > 0) this->cmbSemester->SelectedIndex = 0;
+
+            this->cmbTargetType->Items->Clear();
+            this->cmbTargetType->Items->Add("Student");
+            this->cmbTargetType->Items->Add("Professor");
+            this->cmbTargetType->SelectedIndex = 0;
+
+            LoadTargetData();
+        }
+
+        void LoadTargetData() {
+            this->cmbStudent->Items->Clear();
+            if (this->cmbTargetType->SelectedIndex == 0) {
+                this->lblStudent->Text = "Student:";
+                List<String^>^ students = SIS::DataManager::ReadAllStudents();
+                for each (String^ s in students) {
+                    array<String^>^ p = s->Split(',');
+                    if (p->Length >= 2) this->cmbStudent->Items->Add(p[0] + " - " + p[1]);
+                }
+            } else {
+                this->lblStudent->Text = "Professor:";
+                List<String^>^ instructors = SIS::DataManager::ReadAllProfessorsSimple();
+                for each (String^ s in instructors) {
+                    array<String^>^ p = s->Split(',');
+                    if (p->Length >= 2) this->cmbStudent->Items->Add(p[0] + " - " + p[1]);
+                }
+            }
+            if (this->cmbStudent->Items->Count > 0) this->cmbStudent->SelectedIndex = 0;
         }
 
         int GetIdFromCombo(ComboBox^ cmb) {
@@ -77,14 +96,14 @@ namespace SISDEMO {
             lblTitle->Font = gcnew System::Drawing::Font(L"Segoe UI Semibold", 16, FontStyle::Bold);
             lblTitle->ForeColor = primaryColor;
 
-            array<Label^>^ labels = { lblStudent, lblCourse, lblSemester, lblYear };
+            array<Label^>^ labels = { lblStudent, lblCourse, lblSemester, lblYear, lblTargetType };
             for each (Label^ lbl in labels) {
                 if (lbl == nullptr) continue;
                 lbl->Font = gcnew System::Drawing::Font(L"Segoe UI", 9);
                 lbl->ForeColor = Color::FromArgb(99, 110, 114);
             }
 
-            array<ComboBox^>^ combos = { cmbStudent, cmbCourse, cmbSemester, cmbYear };
+            array<ComboBox^>^ combos = { cmbStudent, cmbCourse, cmbSemester, cmbYear, cmbTargetType };
             for each (ComboBox^ cmb in combos) {
                 if (cmb == nullptr) continue;
                 cmb->FlatStyle = FlatStyle::Flat;
@@ -117,10 +136,12 @@ namespace SISDEMO {
     private: System::Windows::Forms::Label^ lblCourse;
     private: System::Windows::Forms::Label^ lblSemester;
     private: System::Windows::Forms::Label^ lblYear;
+    private: System::Windows::Forms::Label^ lblTargetType;
     private: System::Windows::Forms::ComboBox^ cmbStudent;
     private: System::Windows::Forms::ComboBox^ cmbCourse;
     private: System::Windows::Forms::ComboBox^ cmbSemester;
     private: System::Windows::Forms::ComboBox^ cmbYear;
+    private: System::Windows::Forms::ComboBox^ cmbTargetType;
     private: System::Windows::Forms::Button^ btnAssign;
     private: System::Windows::Forms::Button^ btnClose;
     private: System::ComponentModel::Container^ components;
@@ -131,11 +152,13 @@ namespace SISDEMO {
                this->lblCourse = (gcnew System::Windows::Forms::Label());
                this->lblSemester = (gcnew System::Windows::Forms::Label());
                this->lblYear = (gcnew System::Windows::Forms::Label());
+               this->lblTargetType = (gcnew System::Windows::Forms::Label());
                this->lblTitle = (gcnew System::Windows::Forms::Label());
                this->cmbStudent = (gcnew System::Windows::Forms::ComboBox());
                this->cmbCourse = (gcnew System::Windows::Forms::ComboBox());
                this->cmbSemester = (gcnew System::Windows::Forms::ComboBox());
                this->cmbYear = (gcnew System::Windows::Forms::ComboBox());
+               this->cmbTargetType = (gcnew System::Windows::Forms::ComboBox());
                this->pnlCard = (gcnew System::Windows::Forms::Panel());
                this->btnAssign = (gcnew System::Windows::Forms::Button());
                this->btnClose = (gcnew System::Windows::Forms::Button());
@@ -152,6 +175,8 @@ namespace SISDEMO {
 
                // pnlCard
                this->pnlCard->BackColor = System::Drawing::Color::White;
+               this->pnlCard->Controls->Add(this->lblTargetType);
+               this->pnlCard->Controls->Add(this->cmbTargetType);
                this->pnlCard->Controls->Add(this->lblStudent);
                this->pnlCard->Controls->Add(this->cmbStudent);
                this->pnlCard->Controls->Add(this->lblCourse);
@@ -162,10 +187,17 @@ namespace SISDEMO {
                this->pnlCard->Controls->Add(this->cmbSemester);
                this->pnlCard->Location = System::Drawing::Point(30, 70);
                this->pnlCard->Name = L"pnlCard";
-               this->pnlCard->Size = System::Drawing::Size(360, 220);
+               this->pnlCard->Size = System::Drawing::Size(360, 260);
                this->pnlCard->TabIndex = 1;
 
                int labelX = 20, textX = 140, y = 20, spacing = 45;
+
+               this->lblTargetType->Location = System::Drawing::Point(labelX, y);
+               this->lblTargetType->Text = L"Assign To:";
+               this->cmbTargetType->Location = System::Drawing::Point(textX, y);
+               this->cmbTargetType->Size = System::Drawing::Size(200, 22);
+               this->cmbTargetType->SelectedIndexChanged += gcnew System::EventHandler(this, &AssignCourseForm::cmbTargetType_SelectedIndexChanged);
+               y += spacing;
 
                this->lblStudent->Location = System::Drawing::Point(labelX, y);
                this->lblStudent->Text = L"Student:";
@@ -188,20 +220,20 @@ namespace SISDEMO {
                this->cmbSemester->Size = System::Drawing::Size(200, 22);
 
                // btnAssign
-               this->btnAssign->Location = System::Drawing::Point(210, 310);
+               this->btnAssign->Location = System::Drawing::Point(210, 350);
                this->btnAssign->Size = System::Drawing::Size(100, 35);
                this->btnAssign->TabIndex = 2;
                this->btnAssign->Text = L"Assign Now";
                this->btnAssign->Click += gcnew System::EventHandler(this, &AssignCourseForm::btnAssign_Click);
 
                // btnClose
-               this->btnClose->Location = System::Drawing::Point(320, 310);
+               this->btnClose->Location = System::Drawing::Point(320, 350);
                this->btnClose->Size = System::Drawing::Size(70, 35);
                this->btnClose->TabIndex = 3;
                this->btnClose->Text = L"Close";
                this->btnClose->Click += gcnew System::EventHandler(this, &AssignCourseForm::btnClose_Click);
 
-               this->ClientSize = System::Drawing::Size(420, 370);
+               this->ClientSize = System::Drawing::Size(420, 410);
                this->Controls->Add(this->lblTitle);
                this->Controls->Add(this->pnlCard);
                this->Controls->Add(this->btnAssign);
@@ -219,26 +251,39 @@ namespace SISDEMO {
 
     private: System::Void btnAssign_Click(System::Object^ sender, System::EventArgs^ e) {
         try {
-            int sid = GetIdFromCombo(this->cmbStudent);
+            int targetId = GetIdFromCombo(this->cmbStudent);
             int cid = GetIdFromCombo(this->cmbCourse);
             int yearId = GetIdFromCombo(this->cmbYear);
             int semId = GetIdFromCombo(this->cmbSemester);
 
-            if (sid == -1 || cid == -1 || yearId == -1 || semId == -1) {
+            if (targetId == -1 || cid == -1 || yearId == -1 || semId == -1) {
                 MessageBox::Show("Please select all required fields.", "Validation", MessageBoxButtons::OK, MessageBoxIcon::Warning);
                 return;
             }
 
-            bool ok = SIS::DataManager::RegisterStudentToCourse(sid, cid, yearId, semId);
+            bool ok = false;
+            if (this->cmbTargetType->SelectedIndex == 0) {
+                // Student assignment
+                ok = SIS::DataManager::RegisterStudentToCourse(targetId, cid, yearId, semId);
+            } else {
+                // Professor assignment
+                ok = SIS::DataManager::AssignCourseToProfessor(targetId, cid, yearId, semId);
+            }
+
             if (ok) {
-                MessageBox::Show("Student assigned to course.", "Saved", MessageBoxButtons::OK, MessageBoxIcon::Information);
+                String^ type = this->cmbTargetType->SelectedIndex == 0 ? "Student" : "Professor";
+                MessageBox::Show(type + " assigned to course.", "Saved", MessageBoxButtons::OK, MessageBoxIcon::Information);
                 this->Close();
             }
             else {
-                MessageBox::Show("Failed to assign student. Check data or duplicate.", "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+                MessageBox::Show("Failed to assign. Check data or duplicate.", "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
             }
         }
         catch (Exception^ ex) { MessageBox::Show(String::Format("Error: {0}", ex->Message), "Error", MessageBoxButtons::OK, MessageBoxIcon::Error); }
+    }
+
+    private: System::Void cmbTargetType_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e) {
+        LoadTargetData();
     }
 
     private: System::Void btnClose_Click(System::Object^ sender, System::EventArgs^ e) { this->Close(); }

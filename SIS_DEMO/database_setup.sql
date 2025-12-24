@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS locations (
     FOREIGN KEY (lab_id) REFERENCES laboratories(lab_id) ON DELETE SET NULL
 );
 
--- 10. Instructors Table
+-- 10. Professors Table
 CREATE TABLE IF NOT EXISTS instructors (
     instructor_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL UNIQUE,
@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS student_course_enrollment (
     FOREIGN KEY (semester_id) REFERENCES semesters(semester_id) ON DELETE CASCADE
 );
 
--- 15. Instructor Course Assignment Table
+-- 15. Professor Course Assignment Table
 CREATE TABLE IF NOT EXISTS instructor_course_assignment (
     id INT AUTO_INCREMENT PRIMARY KEY,
     instructor_id INT,

@@ -76,12 +76,12 @@ namespace SISDEMO {
             
             int students = SIS::DataManager::GetStudentCount();
             int courses = SIS::DataManager::GetCourseCount();
-            int instructors = SIS::DataManager::GetInstructorCount();
+            int instructors = SIS::DataManager::GetProfessorCount();
 
             // Create 3 stat cards
             pnlContent->Controls->Add(CreateStatCard("Total Students", students.ToString(), 0));
             pnlContent->Controls->Add(CreateStatCard("Total Courses", courses.ToString(), 1));
-            pnlContent->Controls->Add(CreateStatCard("Total Instructors", instructors.ToString(), 2));
+            pnlContent->Controls->Add(CreateStatCard("Total Professors", instructors.ToString(), 2));
         }
 
     private:
