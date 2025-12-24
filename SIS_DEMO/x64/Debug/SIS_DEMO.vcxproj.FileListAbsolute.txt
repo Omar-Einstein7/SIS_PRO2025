@@ -1,0 +1,25 @@
+C:\Users\Omar Ahmed\Downloads\Programs\SIS_DEMO\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.AssemblyReference.cache
+C:\Users\Omar Ahmed\Downloads\Programs\SIS_DEMO\SIS_DEMO\x64\Debug\SISDEMO.AdminForm.resources
+C:\Users\Omar Ahmed\Downloads\Programs\SIS_DEMO\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.GenerateResource.cache
+C:\Users\Omar Ahmed\Downloads\Programs\SIS_DEMO\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.Up2Date
+C:\Users\Omar Ahmed\Downloads\Programs\SIS_DEMO\SIS_DEMO\x64\Debug\SISDEMO.MainForm.resources
+C:\Omar\Projects\CPROJECT\SIS_DEMO\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.AssemblyReference.cache
+C:\Omar\Projects\CPROJECT\SIS_DEMO\SIS_DEMO\x64\Debug\SISDEMO.AdminForm.resources
+C:\Omar\Projects\CPROJECT\SIS_DEMO\SIS_DEMO\x64\Debug\SISDEMO.MainForm.resources
+C:\Omar\Projects\CPROJECT\SIS_DEMO\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.GenerateResource.cache
+C:\Omar\Projects\CPROJECT\SIS_DEMO\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.Up2Date
+C:\Users\Omar Ahmed\source\repos\SIS_PRO11\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.AssemblyReference.cache
+C:\Users\Omar Ahmed\source\repos\SIS_PRO11\SIS_DEMO\x64\Debug\SISDEMO.AdminForm.resources
+C:\Users\Omar Ahmed\source\repos\SIS_PRO11\SIS_DEMO\x64\Debug\SISDEMO.MainForm.resources
+C:\Users\Omar Ahmed\source\repos\SIS_PRO11\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.GenerateResource.cache
+C:\Users\Omar Ahmed\source\repos\SIS_PRO11\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.Up2Date
+C:\Users\Omar Ahmed\source\repos\SIS_PRO11\x64\Debug\SIS_DEMO.exe.config
+C:\Users\Omar Ahmed\source\repos\SIS_PRO11\SIS_DEMO\x64\Debug\SIS_DEMO.exe
+C:\Users\Omar Ahmed\source\repos\SIS_PRO11\SIS_DEMO\x64\Debug\SISDEMO.LoginForm.resources
+C:\Omar\NCT\2 yaer\Assignemnt 2\SIS_PRO12\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.AssemblyReference.cache
+C:\Omar\NCT\2 yaer\Assignemnt 2\SIS_PRO12\SIS_DEMO\x64\Debug\SISDEMO.AdminForm.resources
+C:\Omar\NCT\2 yaer\Assignemnt 2\SIS_PRO12\SIS_DEMO\x64\Debug\SISDEMO.LoginForm.resources
+C:\Omar\NCT\2 yaer\Assignemnt 2\SIS_PRO12\SIS_DEMO\x64\Debug\SISDEMO.MainForm.resources
+C:\Omar\NCT\2 yaer\Assignemnt 2\SIS_PRO12\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.GenerateResource.cache
+C:\Omar\NCT\2 yaer\Assignemnt 2\SIS_PRO12\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.Up2Date
+C:\Omar\NCT\2 yaer\Assignemnt 2\SIS_PRO12\SIS_DEMO\x64\Debug\SIS_DEMO.exe

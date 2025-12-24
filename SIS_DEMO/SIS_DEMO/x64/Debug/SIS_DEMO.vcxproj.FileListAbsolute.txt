@@ -1,0 +1,8 @@
+C:\Users\Omar Ahmed\source\repos\SIS_PRO11\SIS_DEMO\x64\Debug\MySql.Data.dll
+C:\Users\Omar Ahmed\source\repos\SIS_PRO11\SIS_DEMO\x64\Debug\MySql.Data.xml
+C:\Users\Omar Ahmed\source\repos\SIS_PRO11\SIS_DEMO\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.AssemblyReference.cache
+C:\Users\Omar Ahmed\source\repos\SIS_PRO11\SIS_DEMO\SIS_DEMO\x64\Debug\SISDEMO.AdminForm.resources
+C:\Users\Omar Ahmed\source\repos\SIS_PRO11\SIS_DEMO\SIS_DEMO\x64\Debug\SISDEMO.MainForm.resources
+C:\Users\Omar Ahmed\source\repos\SIS_PRO11\SIS_DEMO\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.GenerateResource.cache
+C:\Users\Omar Ahmed\source\repos\SIS_PRO11\SIS_DEMO\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.Up2Date
+C:\Users\Omar Ahmed\source\repos\SIS_PRO11\SIS_DEMO\x64\Debug\System.Runtime.CompilerServices.Unsafe.dll
