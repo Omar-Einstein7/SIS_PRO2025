@@ -39,6 +39,7 @@ namespace SISDEMO {
         System::Windows::Forms::DateTimePicker^ dtpEnd;
         System::Windows::Forms::ComboBox^ cmbYear;
         System::Windows::Forms::ComboBox^ cmbSemester;
+        System::Windows::Forms::ComboBox^ cmbGroup;
 
     public:
         AdminScheduleMgmtForm()
@@ -71,6 +72,7 @@ namespace SISDEMO {
             this->dtpEnd = (gcnew System::Windows::Forms::DateTimePicker());
             this->cmbYear = (gcnew System::Windows::Forms::ComboBox());
             this->cmbSemester = (gcnew System::Windows::Forms::ComboBox());
+            this->cmbGroup = (gcnew System::Windows::Forms::ComboBox());
 
             this->pnlHeader->SuspendLayout();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dgvSchedules))->BeginInit();
@@ -155,8 +157,15 @@ namespace SISDEMO {
 
             CreateLabel("Semester:", 810, 150);
             this->cmbSemester->Location = System::Drawing::Point(810, 175);
-            this->cmbSemester->Size = System::Drawing::Size(120, 25);
+            this->cmbSemester->Size = System::Drawing::Size(80, 25);
             this->cmbSemester->DropDownStyle = ComboBoxStyle::DropDownList;
+
+            CreateLabel("Group:", 900, 150);
+            this->cmbGroup->Location = System::Drawing::Point(900, 175);
+            this->cmbGroup->Size = System::Drawing::Size(80, 25);
+            this->cmbGroup->DropDownStyle = ComboBoxStyle::DropDownList;
+            this->cmbGroup->Items->AddRange(gcnew array<Object^>{ "All", "1", "2" });
+            this->cmbGroup->SelectedIndex = 0;
 
             // DataGridView
             this->dgvSchedules->AllowUserToAddRows = false;
@@ -203,6 +212,7 @@ namespace SISDEMO {
             this->Controls->Add(this->dtpEnd);
             this->Controls->Add(this->cmbYear);
             this->Controls->Add(this->cmbSemester);
+            this->Controls->Add(this->cmbGroup);
 
             this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedDialog;
             this->StartPosition = FormStartPosition::CenterParent;
@@ -325,12 +335,13 @@ namespace SISDEMO {
             dgvSchedules->Columns->Add("Start", "Start");
             dgvSchedules->Columns->Add("End", "End");
             dgvSchedules->Columns->Add("Location", "Location");
+            dgvSchedules->Columns->Add("Group", "Group");
 
             List<String^>^ sch = SIS::DataManager::ReadAllSchedules();
             for each (String^ s in sch) {
                 array<String^>^ p = s->Split('|');
-                if (p->Length >= 10) {
-                    dgvSchedules->Rows->Add(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9]);
+                if (p->Length >= 11) {
+                    dgvSchedules->Rows->Add(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], String::IsNullOrEmpty(p[10]) ? "All" : p[10]);
                 }
             }
         }
@@ -377,8 +388,10 @@ namespace SISDEMO {
                 String^ day = cmbDay->SelectedItem->ToString();
                 String^ start = dtpStart->Value.ToString("HH:mm:ss");
                 String^ end = dtpEnd->Value.ToString("HH:mm:ss");
+                String^ group = cmbGroup->SelectedItem->ToString();
+                if (group == "All") group = "";
 
-                String^ result = SIS::DataManager::SaveScheduleWithResult(cid, iid, yid, sid, lid, customLoc, fid, did, alid, day, start, end);
+                String^ result = SIS::DataManager::SaveScheduleWithResult(cid, iid, yid, sid, lid, customLoc, fid, did, alid, day, start, end, group);
                 if (result == "SUCCESS") {
                     MessageBox::Show("Schedule added successfully.", "Success", MessageBoxButtons::OK, MessageBoxIcon::Information);
                     LoadScheduleList();

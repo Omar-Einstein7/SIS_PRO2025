@@ -289,8 +289,8 @@ Class SIS.DataManager: AutoLayout, AnsiClass, Class, Public, Sealed, BeforeField
     AddLectureHall(String, Int32): PrivateScope, Public, Static, HideBySig
     AddLaboratory(String, Int32): PrivateScope, Public, Static, HideBySig
     DeleteLocation(Int32): PrivateScope, Public, Static, HideBySig
-    SaveScheduleWithResult(Int32, Int32, Int32, Int32, Int32, String, Int32, Int32, Int32, String, String, String): PrivateScope, Public, Static, HideBySig
-    SaveSchedule(Int32, Int32, Int32, Int32, Int32, String, Int32, Int32, Int32, String, String, String): PrivateScope, Public, Static, HideBySig
+    SaveScheduleWithResult(Int32, Int32, Int32, Int32, Int32, String, Int32, Int32, Int32, String, String, String, String): PrivateScope, Public, Static, HideBySig
+    SaveSchedule(Int32, Int32, Int32, Int32, Int32, String, Int32, Int32, Int32, String, String, String, String): PrivateScope, Public, Static, HideBySig
     ReadAllSchedules(): PrivateScope, Public, Static, HideBySig
     DeleteSchedule(Int32): PrivateScope, Public, Static, HideBySig
     ReadAllLocationsSimple(): PrivateScope, Public, Static, HideBySig

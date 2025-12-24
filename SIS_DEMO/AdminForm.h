@@ -197,7 +197,7 @@ namespace SISDEMO {
                // 
                // btnScheduleManagement
                // 
-               this->btnScheduleManagement->Location = System::Drawing::Point(0, 50);
+               this->btnScheduleManagement->Location = System::Drawing::Point(0, 0);
                this->btnScheduleManagement->Name = L"btnScheduleManagement";
                this->btnScheduleManagement->Size = System::Drawing::Size(250, 50);
                this->btnScheduleManagement->TabIndex = 12;
@@ -206,7 +206,7 @@ namespace SISDEMO {
                // 
                // btnLocations
                // 
-               this->btnLocations->Location = System::Drawing::Point(0, 100);
+               this->btnLocations->Location = System::Drawing::Point(0, 50);
                this->btnLocations->Name = L"btnLocations";
                this->btnLocations->Size = System::Drawing::Size(250, 50);
                this->btnLocations->TabIndex = 13;

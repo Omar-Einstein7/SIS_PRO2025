@@ -89,6 +89,7 @@ namespace SISDEMO {
             dgvSchedule->Columns->Add("Course", "Course");
             dgvSchedule->Columns->Add("Professor", "Professor");
             dgvSchedule->Columns->Add("Location", "Location");
+            dgvSchedule->Columns->Add("Group", "Group");
             dgvSchedule->Columns->Add("Start", "Start");
             dgvSchedule->Columns->Add("End", "End");
 
@@ -100,8 +101,9 @@ namespace SISDEMO {
             List<String^>^ schedule = SIS::DataManager::ReadScheduleForStudent(this->studentId);
             for each (String^ s in schedule) {
                 array<String^>^ parts = s->Split('|');
-                if (parts->Length >= 6) {
-                    dgvSchedule->Rows->Add(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]);
+                if (parts->Length >= 7) {
+                    // Parts: day, course, prof, loc, start, end, group
+                    dgvSchedule->Rows->Add(parts[0], parts[1], parts[2], parts[3], String::IsNullOrEmpty(parts[6]) ? "All" : parts[6], parts[4], parts[5]);
                 }
             }
         }
