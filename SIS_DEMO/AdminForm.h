@@ -11,6 +11,8 @@
 #include "FacultiesManagementForm.h"
 #include "DepartmentsManagementForm.h"
 #include "NewsManagementForm.h"
+#include "AdminScheduleMgmtForm.h"
+#include "LocationManagementForm.h"
 #include "DataManager.h"
 
 
@@ -92,7 +94,7 @@ namespace SISDEMO {
                 btnRegisterStudent, btnPaymentMgmt, btnViewStudents, 
                 btnRegisterCourse, btnAssignCourse, btnViewPayments, 
                 btnUserManagement, btnFaculties, btnDepartments,
-                btnAcademicCalendar, btnNews, btnClose 
+                btnAcademicCalendar, btnNews, btnScheduleManagement, btnLocations, btnClose 
             };
 
             for each (Button^ btn in buttons) {
@@ -131,36 +133,41 @@ namespace SISDEMO {
     private: System::Windows::Forms::Button^ btnDepartments;
     private: System::Windows::Forms::Button^ btnAcademicCalendar;
     private: System::Windows::Forms::Button^ btnNews;
+    private: System::Windows::Forms::Button^ btnScheduleManagement;
+    private: System::Windows::Forms::Button^ btnLocations;
     private: System::Windows::Forms::Button^ btnClose;
     private: System::ComponentModel::Container^ components;
 
            void InitializeComponent(void)
            {
                this->pnlSidebar = (gcnew System::Windows::Forms::Panel());
-               this->pnlHeader = (gcnew System::Windows::Forms::Panel());
-               this->pnlContent = (gcnew System::Windows::Forms::Panel());
-               this->lblDashboard = (gcnew System::Windows::Forms::Label());
-               this->lblWelcome = (gcnew System::Windows::Forms::Label());
-               this->btnRegisterStudent = (gcnew System::Windows::Forms::Button());
-               this->btnPaymentMgmt = (gcnew System::Windows::Forms::Button());
-               this->btnViewStudents = (gcnew System::Windows::Forms::Button());
-               this->btnViewPayments = (gcnew System::Windows::Forms::Button());
-               this->btnRegisterCourse = (gcnew System::Windows::Forms::Button());
-               this->btnAssignCourse = (gcnew System::Windows::Forms::Button());
-               this->btnUserManagement = (gcnew System::Windows::Forms::Button());
-               this->btnFaculties = (gcnew System::Windows::Forms::Button());
-               this->btnDepartments = (gcnew System::Windows::Forms::Button());
-               this->btnAcademicCalendar = (gcnew System::Windows::Forms::Button());
-               this->btnNews = (gcnew System::Windows::Forms::Button());
                this->btnClose = (gcnew System::Windows::Forms::Button());
+               this->btnLocations = (gcnew System::Windows::Forms::Button());
+               this->btnScheduleManagement = (gcnew System::Windows::Forms::Button());
+               this->btnNews = (gcnew System::Windows::Forms::Button());
+               this->btnAcademicCalendar = (gcnew System::Windows::Forms::Button());
+               this->btnDepartments = (gcnew System::Windows::Forms::Button());
+               this->btnFaculties = (gcnew System::Windows::Forms::Button());
+               this->btnUserManagement = (gcnew System::Windows::Forms::Button());
+               this->btnViewPayments = (gcnew System::Windows::Forms::Button());
+               this->btnAssignCourse = (gcnew System::Windows::Forms::Button());
+               this->btnRegisterCourse = (gcnew System::Windows::Forms::Button());
+               this->btnViewStudents = (gcnew System::Windows::Forms::Button());
+               this->btnPaymentMgmt = (gcnew System::Windows::Forms::Button());
+               this->btnRegisterStudent = (gcnew System::Windows::Forms::Button());
+               this->pnlHeader = (gcnew System::Windows::Forms::Panel());
+               this->lblWelcome = (gcnew System::Windows::Forms::Label());
+               this->lblDashboard = (gcnew System::Windows::Forms::Label());
+               this->pnlContent = (gcnew System::Windows::Forms::Panel());
                this->pnlSidebar->SuspendLayout();
                this->pnlHeader->SuspendLayout();
                this->SuspendLayout();
                // 
                // pnlSidebar
                // 
-               this->pnlSidebar->BackColor = this->sidebarColor;
                this->pnlSidebar->Controls->Add(this->btnClose);
+               this->pnlSidebar->Controls->Add(this->btnLocations);
+               this->pnlSidebar->Controls->Add(this->btnScheduleManagement);
                this->pnlSidebar->Controls->Add(this->btnNews);
                this->pnlSidebar->Controls->Add(this->btnAcademicCalendar);
                this->pnlSidebar->Controls->Add(this->btnDepartments);
@@ -178,6 +185,133 @@ namespace SISDEMO {
                this->pnlSidebar->Size = System::Drawing::Size(250, 700);
                this->pnlSidebar->TabIndex = 0;
                // 
+               // btnClose
+               // 
+               this->btnClose->Dock = System::Windows::Forms::DockStyle::Bottom;
+               this->btnClose->Location = System::Drawing::Point(0, 650);
+               this->btnClose->Name = L"btnClose";
+               this->btnClose->Size = System::Drawing::Size(250, 50);
+               this->btnClose->TabIndex = 7;
+               this->btnClose->Text = L"Logout";
+               this->btnClose->Click += gcnew System::EventHandler(this, &AdminForm::btnClose_Click);
+               // 
+               // btnScheduleManagement
+               // 
+               this->btnScheduleManagement->Location = System::Drawing::Point(0, 50);
+               this->btnScheduleManagement->Name = L"btnScheduleManagement";
+               this->btnScheduleManagement->Size = System::Drawing::Size(250, 50);
+               this->btnScheduleManagement->TabIndex = 12;
+               this->btnScheduleManagement->Text = L"Schedule Management";
+               this->btnScheduleManagement->Click += gcnew System::EventHandler(this, &AdminForm::btnScheduleManagement_Click);
+               // 
+               // btnLocations
+               // 
+               this->btnLocations->Location = System::Drawing::Point(0, 100);
+               this->btnLocations->Name = L"btnLocations";
+               this->btnLocations->Size = System::Drawing::Size(250, 50);
+               this->btnLocations->TabIndex = 13;
+               this->btnLocations->Text = L"Location Management";
+               this->btnLocations->Click += gcnew System::EventHandler(this, &AdminForm::btnLocations_Click);
+               // 
+               // btnNews
+               // 
+               this->btnNews->Location = System::Drawing::Point(0, 600);
+               this->btnNews->Name = L"btnNews";
+               this->btnNews->Size = System::Drawing::Size(250, 50);
+               this->btnNews->TabIndex = 11;
+               this->btnNews->Text = L"News Management";
+               this->btnNews->Click += gcnew System::EventHandler(this, &AdminForm::btnNews_Click);
+               // 
+               // btnAcademicCalendar
+               // 
+               this->btnAcademicCalendar->Location = System::Drawing::Point(0, 550);
+               this->btnAcademicCalendar->Name = L"btnAcademicCalendar";
+               this->btnAcademicCalendar->Size = System::Drawing::Size(250, 50);
+               this->btnAcademicCalendar->TabIndex = 10;
+               this->btnAcademicCalendar->Text = L"Academic Calendar";
+               this->btnAcademicCalendar->Click += gcnew System::EventHandler(this, &AdminForm::btnAcademicCalendar_Click);
+               // 
+               // btnDepartments
+               // 
+               this->btnDepartments->Location = System::Drawing::Point(0, 500);
+               this->btnDepartments->Name = L"btnDepartments";
+               this->btnDepartments->Size = System::Drawing::Size(250, 50);
+               this->btnDepartments->TabIndex = 9;
+               this->btnDepartments->Text = L"Departments";
+               this->btnDepartments->Click += gcnew System::EventHandler(this, &AdminForm::btnDepartments_Click);
+               // 
+               // btnFaculties
+               // 
+               this->btnFaculties->Location = System::Drawing::Point(0, 450);
+               this->btnFaculties->Name = L"btnFaculties";
+               this->btnFaculties->Size = System::Drawing::Size(250, 50);
+               this->btnFaculties->TabIndex = 8;
+               this->btnFaculties->Text = L"Faculties";
+               this->btnFaculties->Click += gcnew System::EventHandler(this, &AdminForm::btnFaculties_Click);
+               // 
+               // btnUserManagement
+               // 
+               this->btnUserManagement->Location = System::Drawing::Point(0, 400);
+               this->btnUserManagement->Name = L"btnUserManagement";
+               this->btnUserManagement->Size = System::Drawing::Size(250, 50);
+               this->btnUserManagement->TabIndex = 6;
+               this->btnUserManagement->Text = L"User Management";
+               this->btnUserManagement->Click += gcnew System::EventHandler(this, &AdminForm::btnUserManagement_Click);
+               // 
+               // btnViewPayments
+               // 
+               this->btnViewPayments->Location = System::Drawing::Point(0, 350);
+               this->btnViewPayments->Name = L"btnViewPayments";
+               this->btnViewPayments->Size = System::Drawing::Size(250, 50);
+               this->btnViewPayments->TabIndex = 5;
+               this->btnViewPayments->Text = L"View Payments";
+               this->btnViewPayments->Click += gcnew System::EventHandler(this, &AdminForm::btnViewPayments_Click);
+               // 
+               // btnAssignCourse
+               // 
+               this->btnAssignCourse->Location = System::Drawing::Point(0, 300);
+               this->btnAssignCourse->Name = L"btnAssignCourse";
+               this->btnAssignCourse->Size = System::Drawing::Size(250, 50);
+               this->btnAssignCourse->TabIndex = 4;
+               this->btnAssignCourse->Text = L"Assign to Course";
+               this->btnAssignCourse->Click += gcnew System::EventHandler(this, &AdminForm::btnAssignCourse_Click);
+               // 
+               // btnRegisterCourse
+               // 
+               this->btnRegisterCourse->Location = System::Drawing::Point(0, 250);
+               this->btnRegisterCourse->Name = L"btnRegisterCourse";
+               this->btnRegisterCourse->Size = System::Drawing::Size(250, 50);
+               this->btnRegisterCourse->TabIndex = 3;
+               this->btnRegisterCourse->Text = L"Register Course";
+               this->btnRegisterCourse->Click += gcnew System::EventHandler(this, &AdminForm::btnRegisterCourse_Click);
+               // 
+               // btnViewStudents
+               // 
+               this->btnViewStudents->Location = System::Drawing::Point(0, 200);
+               this->btnViewStudents->Name = L"btnViewStudents";
+               this->btnViewStudents->Size = System::Drawing::Size(250, 50);
+               this->btnViewStudents->TabIndex = 2;
+               this->btnViewStudents->Text = L"View Students";
+               this->btnViewStudents->Click += gcnew System::EventHandler(this, &AdminForm::btnViewStudents_Click);
+               // 
+               // btnPaymentMgmt
+               // 
+               this->btnPaymentMgmt->Location = System::Drawing::Point(0, 150);
+               this->btnPaymentMgmt->Name = L"btnPaymentMgmt";
+               this->btnPaymentMgmt->Size = System::Drawing::Size(250, 50);
+               this->btnPaymentMgmt->TabIndex = 1;
+               this->btnPaymentMgmt->Text = L"Payment Management";
+               this->btnPaymentMgmt->Click += gcnew System::EventHandler(this, &AdminForm::btnPaymentMgmt_Click);
+               // 
+               // btnRegisterStudent
+               // 
+               this->btnRegisterStudent->Location = System::Drawing::Point(0, 100);
+               this->btnRegisterStudent->Name = L"btnRegisterStudent";
+               this->btnRegisterStudent->Size = System::Drawing::Size(250, 50);
+               this->btnRegisterStudent->TabIndex = 0;
+               this->btnRegisterStudent->Text = L"Register Student";
+               this->btnRegisterStudent->Click += gcnew System::EventHandler(this, &AdminForm::btnRegisterStudent_Click);
+               // 
                // pnlHeader
                // 
                this->pnlHeader->BackColor = System::Drawing::Color::White;
@@ -189,17 +323,6 @@ namespace SISDEMO {
                this->pnlHeader->Size = System::Drawing::Size(750, 80);
                this->pnlHeader->TabIndex = 1;
                // 
-               // lblDashboard
-               // 
-               this->lblDashboard->AutoSize = true;
-               this->lblDashboard->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 18, System::Drawing::FontStyle::Bold));
-               this->lblDashboard->ForeColor = this->sidebarColor;
-               this->lblDashboard->Location = System::Drawing::Point(20, 23);
-               this->lblDashboard->Name = L"lblDashboard";
-               this->lblDashboard->Size = System::Drawing::Size(210, 32);
-               this->lblDashboard->TabIndex = 0;
-               this->lblDashboard->Text = L"Admin Dashboard";
-               // 
                // lblWelcome
                // 
                this->lblWelcome->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Top | System::Windows::Forms::AnchorStyles::Right));
@@ -208,9 +331,19 @@ namespace SISDEMO {
                this->lblWelcome->ForeColor = System::Drawing::Color::Gray;
                this->lblWelcome->Location = System::Drawing::Point(580, 32);
                this->lblWelcome->Name = L"lblWelcome";
-               this->lblWelcome->Size = System::Drawing::Size(150, 19);
+               this->lblWelcome->Size = System::Drawing::Size(143, 19);
                this->lblWelcome->TabIndex = 1;
                this->lblWelcome->Text = L"Welcome back, Admin";
+               // 
+               // lblDashboard
+               // 
+               this->lblDashboard->AutoSize = true;
+               this->lblDashboard->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 18, System::Drawing::FontStyle::Bold));
+               this->lblDashboard->Location = System::Drawing::Point(20, 23);
+               this->lblDashboard->Name = L"lblDashboard";
+               this->lblDashboard->Size = System::Drawing::Size(210, 32);
+               this->lblDashboard->TabIndex = 0;
+               this->lblDashboard->Text = L"Admin Dashboard";
                // 
                // pnlContent
                // 
@@ -220,115 +353,6 @@ namespace SISDEMO {
                this->pnlContent->Padding = System::Windows::Forms::Padding(30);
                this->pnlContent->Size = System::Drawing::Size(750, 620);
                this->pnlContent->TabIndex = 2;
-               // 
-               // btnRegisterStudent
-               // 
-               this->btnRegisterStudent->Location = System::Drawing::Point(0, 100);
-               this->btnRegisterStudent->Name = L"btnRegisterStudent";
-               this->btnRegisterStudent->Size = System::Drawing::Size(250, 50);
-               this->btnRegisterStudent->TabIndex = 0;
-               this->btnRegisterStudent->Text = L"Register Student";
-               this->btnRegisterStudent->Click += gcnew System::EventHandler(this, &AdminForm::btnRegisterStudent_Click);
-               // 
-               // btnPaymentMgmt
-               // 
-               this->btnPaymentMgmt->Location = System::Drawing::Point(0, 150);
-               this->btnPaymentMgmt->Name = L"btnPaymentMgmt";
-               this->btnPaymentMgmt->Size = System::Drawing::Size(250, 50);
-               this->btnPaymentMgmt->TabIndex = 1;
-               this->btnPaymentMgmt->Text = L"Payment Management";
-               this->btnPaymentMgmt->Click += gcnew System::EventHandler(this, &AdminForm::btnPaymentMgmt_Click);
-               // 
-               // btnViewStudents
-               // 
-               this->btnViewStudents->Location = System::Drawing::Point(0, 200);
-               this->btnViewStudents->Name = L"btnViewStudents";
-               this->btnViewStudents->Size = System::Drawing::Size(250, 50);
-               this->btnViewStudents->TabIndex = 2;
-               this->btnViewStudents->Text = L"View Students";
-               this->btnViewStudents->Click += gcnew System::EventHandler(this, &AdminForm::btnViewStudents_Click);
-               // 
-               // btnRegisterCourse
-               // 
-               this->btnRegisterCourse->Location = System::Drawing::Point(0, 250);
-               this->btnRegisterCourse->Name = L"btnRegisterCourse";
-               this->btnRegisterCourse->Size = System::Drawing::Size(250, 50);
-               this->btnRegisterCourse->TabIndex = 3;
-               this->btnRegisterCourse->Text = L"Register Course";
-               this->btnRegisterCourse->Click += gcnew System::EventHandler(this, &AdminForm::btnRegisterCourse_Click);
-               // 
-               // btnAssignCourse
-               // 
-               this->btnAssignCourse->Location = System::Drawing::Point(0, 300);
-               this->btnAssignCourse->Name = L"btnAssignCourse";
-               this->btnAssignCourse->Size = System::Drawing::Size(250, 50);
-               this->btnAssignCourse->TabIndex = 4;
-               this->btnAssignCourse->Text = L"Assign to Course";
-               this->btnAssignCourse->Click += gcnew System::EventHandler(this, &AdminForm::btnAssignCourse_Click);
-               // 
-               // btnViewPayments
-               // 
-               this->btnViewPayments->Location = System::Drawing::Point(0, 350);
-               this->btnViewPayments->Name = L"btnViewPayments";
-               this->btnViewPayments->Size = System::Drawing::Size(250, 50);
-               this->btnViewPayments->TabIndex = 5;
-               this->btnViewPayments->Text = L"View Payments";
-               this->btnViewPayments->Click += gcnew System::EventHandler(this, &AdminForm::btnViewPayments_Click);
-               // 
-               // btnUserManagement
-               // 
-               this->btnUserManagement->Location = System::Drawing::Point(0, 400);
-               this->btnUserManagement->Name = L"btnUserManagement";
-               this->btnUserManagement->Size = System::Drawing::Size(250, 50);
-               this->btnUserManagement->TabIndex = 6;
-               this->btnUserManagement->Text = L"User Management";
-               this->btnUserManagement->Click += gcnew System::EventHandler(this, &AdminForm::btnUserManagement_Click);
-               // 
-               // btnFaculties
-               // 
-               this->btnFaculties->Location = System::Drawing::Point(0, 450);
-               this->btnFaculties->Name = L"btnFaculties";
-               this->btnFaculties->Size = System::Drawing::Size(250, 50);
-               this->btnFaculties->TabIndex = 8;
-               this->btnFaculties->Text = L"Faculties";
-               this->btnFaculties->Click += gcnew System::EventHandler(this, &AdminForm::btnFaculties_Click);
-               // 
-               // btnDepartments
-               // 
-               this->btnDepartments->Location = System::Drawing::Point(0, 500);
-               this->btnDepartments->Name = L"btnDepartments";
-               this->btnDepartments->Size = System::Drawing::Size(250, 50);
-               this->btnDepartments->TabIndex = 9;
-               this->btnDepartments->Text = L"Departments";
-               this->btnDepartments->Click += gcnew System::EventHandler(this, &AdminForm::btnDepartments_Click);
-               // 
-               // btnAcademicCalendar
-               // 
-               this->btnAcademicCalendar->Location = System::Drawing::Point(0, 550);
-               this->btnAcademicCalendar->Name = L"btnAcademicCalendar";
-               this->btnAcademicCalendar->Size = System::Drawing::Size(250, 50);
-               this->btnAcademicCalendar->TabIndex = 10;
-               this->btnAcademicCalendar->Text = L"Academic Calendar";
-               this->btnAcademicCalendar->Click += gcnew System::EventHandler(this, &AdminForm::btnAcademicCalendar_Click);
-               // 
-               // btnNews
-               // 
-               this->btnNews->Location = System::Drawing::Point(0, 600);
-               this->btnNews->Name = L"btnNews";
-               this->btnNews->Size = System::Drawing::Size(250, 50);
-               this->btnNews->TabIndex = 11;
-               this->btnNews->Text = L"News Management";
-               this->btnNews->Click += gcnew System::EventHandler(this, &AdminForm::btnNews_Click);
-               // 
-               // btnClose
-               // 
-               this->btnClose->Dock = System::Windows::Forms::DockStyle::Bottom;
-               this->btnClose->Location = System::Drawing::Point(0, 700);
-               this->btnClose->Name = L"btnClose";
-               this->btnClose->Size = System::Drawing::Size(250, 50);
-               this->btnClose->TabIndex = 7;
-               this->btnClose->Text = L"Logout";
-               this->btnClose->Click += gcnew System::EventHandler(this, &AdminForm::btnClose_Click);
                // 
                // AdminForm
                // 
@@ -400,6 +424,16 @@ namespace SISDEMO {
 
     private: System::Void btnNews_Click(System::Object^ sender, System::EventArgs^ e) {
         NewsManagementForm^ f = gcnew NewsManagementForm();
+        f->ShowDialog();
+    }
+    
+    private: System::Void btnScheduleManagement_Click(System::Object^ sender, System::EventArgs^ e) {
+        AdminScheduleMgmtForm^ f = gcnew AdminScheduleMgmtForm();
+        f->ShowDialog();
+    }
+
+    private: System::Void btnLocations_Click(System::Object^ sender, System::EventArgs^ e) {
+        LocationManagementForm^ f = gcnew LocationManagementForm();
         f->ShowDialog();
     }
 

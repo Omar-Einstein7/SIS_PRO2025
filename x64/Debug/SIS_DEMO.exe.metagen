@@ -278,12 +278,22 @@ Class SIS.DataManager: AutoLayout, AnsiClass, Class, Public, Sealed, BeforeField
     ReadAllSemesters(): PrivateScope, Public, Static, HideBySig
     ReadAllYears(): PrivateScope, Public, Static, HideBySig
     ReadAllLevels(): PrivateScope, Public, Static, HideBySig
+    ReadAllAcademicYears(): PrivateScope, Public, Static, HideBySig
+    ReadAllAcademicLevels(): PrivateScope, Public, Static, HideBySig
     ReadScheduleForStudent(Int32): PrivateScope, Public, Static, HideBySig
     ReadAttendanceForStudent(Int32): PrivateScope, Public, Static, HideBySig
     ReadStudentsByCourse(Int32, Int32): PrivateScope, Public, Static, HideBySig
     SaveAttendance(Int32, Int32, Int32, String, String): PrivateScope, Public, Static, HideBySig
     ReadAllLaboratories(): PrivateScope, Public, Static, HideBySig
     ReadAllLectureHalls(): PrivateScope, Public, Static, HideBySig
+    AddLectureHall(String, Int32): PrivateScope, Public, Static, HideBySig
+    AddLaboratory(String, Int32): PrivateScope, Public, Static, HideBySig
+    DeleteLocation(Int32): PrivateScope, Public, Static, HideBySig
+    SaveScheduleWithResult(Int32, Int32, Int32, Int32, Int32, String, Int32, Int32, Int32, String, String, String): PrivateScope, Public, Static, HideBySig
+    SaveSchedule(Int32, Int32, Int32, Int32, Int32, String, Int32, Int32, Int32, String, String, String): PrivateScope, Public, Static, HideBySig
+    ReadAllSchedules(): PrivateScope, Public, Static, HideBySig
+    DeleteSchedule(Int32): PrivateScope, Public, Static, HideBySig
+    ReadAllLocationsSimple(): PrivateScope, Public, Static, HideBySig
     GetStudentCount(): PrivateScope, Public, Static, HideBySig
     GetCourseCount(): PrivateScope, Public, Static, HideBySig
     GetProfessorCount(): PrivateScope, Public, Static, HideBySig
@@ -343,6 +353,12 @@ Class SISDEMO.DepartmentsManagementForm: AutoLayout, AnsiClass, Class, Public, B
   :System.Windows.Forms.Form
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
 Class SISDEMO.NewsManagementForm: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
+  :System.Windows.Forms.Form
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+Class SISDEMO.AdminScheduleMgmtForm: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
+  :System.Windows.Forms.Form
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+Class SISDEMO.LocationManagementForm: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
   :System.Windows.Forms.Form
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
 Class SISDEMO.AdminForm: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit

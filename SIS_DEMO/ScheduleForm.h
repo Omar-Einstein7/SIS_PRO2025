@@ -85,11 +85,12 @@ namespace SISDEMO {
 
         void LoadSchedule() {
             dgvSchedule->Columns->Clear();
-            dgvSchedule->Columns->Add("Course", "Course Name");
             dgvSchedule->Columns->Add("Day", "Day");
-            dgvSchedule->Columns->Add("Start", "Start Time");
-            dgvSchedule->Columns->Add("End", "End Time");
+            dgvSchedule->Columns->Add("Course", "Course");
+            dgvSchedule->Columns->Add("Professor", "Professor");
             dgvSchedule->Columns->Add("Location", "Location");
+            dgvSchedule->Columns->Add("Start", "Start");
+            dgvSchedule->Columns->Add("End", "End");
 
             dgvSchedule->EnableHeadersVisualStyles = false;
             dgvSchedule->ColumnHeadersDefaultCellStyle->BackColor = primaryColor;
@@ -99,8 +100,8 @@ namespace SISDEMO {
             List<String^>^ schedule = SIS::DataManager::ReadScheduleForStudent(this->studentId);
             for each (String^ s in schedule) {
                 array<String^>^ parts = s->Split('|');
-                if (parts->Length >= 5) {
-                    dgvSchedule->Rows->Add(parts[0], parts[1], parts[2], parts[3], parts[4]);
+                if (parts->Length >= 6) {
+                    dgvSchedule->Rows->Add(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]);
                 }
             }
         }

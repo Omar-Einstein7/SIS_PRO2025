@@ -102,6 +102,10 @@ CREATE TABLE `academic_schedule` (
   `academic_year_id` int(11) DEFAULT NULL,
   `semester_id` int(11) DEFAULT NULL,
   `location_id` int(11) DEFAULT NULL,
+  `custom_location` varchar(255) DEFAULT NULL,
+  `faculty_id` int(11) DEFAULT NULL,
+  `department_id` int(11) DEFAULT NULL,
+  `academic_level_id` int(11) DEFAULT NULL,
   `day_of_week` varchar(10) NOT NULL,
   `start_time` time NOT NULL,
   `end_time` time NOT NULL,
@@ -113,22 +117,22 @@ CREATE TABLE `academic_schedule` (
 -- Dumping data for table `academic_schedule`
 --
 
-INSERT INTO `academic_schedule` (`schedule_id`, `course_id`, `instructor_id`, `academic_year_id`, `semester_id`, `location_id`, `day_of_week`, `start_time`, `end_time`, `group_number`, `section_number`) VALUES
-(1, 1, 1, 3, 5, 1, 'Sunday', '09:00:00', '11:00:00', '1', '1'),
-(2, 2, 2, 3, 5, 3, 'Tuesday', '11:00:00', '13:00:00', '1', '1'),
-(3, 3, 3, 3, 5, 1, 'Thursday', '09:00:00', '11:00:00', '2', '1'),
-(4, 4, 4, 3, 5, 2, 'Sunday', '11:00:00', '13:00:00', '1', '1'),
-(5, 5, 5, 3, 5, 3, 'Tuesday', '09:00:00', '11:00:00', '1', '2'),
-(6, 6, 6, 3, 5, 2, 'Thursday', '11:00:00', '13:00:00', '2', '1'),
-(7, 7, 7, 3, 5, 1, 'Monday', '09:00:00', '11:00:00', '1', '1'),
-(8, 8, 8, 3, 5, 4, 'Wednesday', '11:00:00', '13:00:00', '1', '1'),
-(9, 9, 9, 3, 5, 1, 'Saturday', '09:00:00', '11:00:00', '2', '1'),
-(10, 10, 10, 3, 5, 3, 'Monday', '11:00:00', '13:00:00', '1', '1'),
-(11, 11, 11, 3, 5, 4, 'Wednesday', '09:00:00', '11:00:00', '1', '2'),
-(12, 12, 12, 3, 5, 3, 'Saturday', '11:00:00', '13:00:00', '2', '1'),
-(13, 13, 13, 3, 5, 2, 'Sunday', '09:00:00', '11:00:00', '1', '1'),
-(14, 14, 14, 3, 5, 1, 'Tuesday', '11:00:00', '13:00:00', '1', '1'),
-(15, 15, 15, 3, 5, 2, 'Thursday', '09:00:00', '11:00:00', '2', '1');
+INSERT INTO `academic_schedule` (`schedule_id`, `course_id`, `instructor_id`, `academic_year_id`, `semester_id`, `location_id`, `custom_location`, `faculty_id`, `department_id`, `academic_level_id`, `day_of_week`, `start_time`, `end_time`, `group_number`, `section_number`) VALUES
+(1, 1, 1, 3, 5, 1, NULL, 1, 1, 1, 'Sunday', '09:00:00', '11:00:00', '1', '1'),
+(2, 2, 2, 3, 5, 3, NULL, 1, 2, 1, 'Tuesday', '11:00:00', '13:00:00', '1', '1'),
+(3, 3, 3, 3, 5, 1, NULL, 1, 3, 1, 'Thursday', '09:00:00', '11:00:00', '2', '1'),
+(4, 4, 4, 3, 5, 2, NULL, 2, 4, 1, 'Sunday', '11:00:00', '13:00:00', '1', '1'),
+(5, 5, 5, 3, 5, 3, NULL, 2, 5, 1, 'Tuesday', '09:00:00', '11:00:00', '1', '2'),
+(6, 6, 6, 3, 5, 2, NULL, 2, 5, 1, 'Thursday', '11:00:00', '13:00:00', '2', '1'),
+(7, 7, 7, 3, 5, 1, NULL, 3, 7, 1, 'Monday', '09:00:00', '11:00:00', '1', '1'),
+(8, 8, 8, 3, 5, 4, NULL, 3, 7, 1, 'Wednesday', '11:00:00', '13:00:00', '1', '1'),
+(9, 9, 9, 3, 5, 1, NULL, 3, 7, 1, 'Saturday', '09:00:00', '11:00:00', '2', '1'),
+(10, 10, 10, 3, 5, 3, NULL, 4, 10, 1, 'Monday', '11:00:00', '13:00:00', '1', '1'),
+(11, 11, 11, 3, 5, 4, NULL, 4, 10, 1, 'Wednesday', '09:00:00', '11:00:00', '1', '2'),
+(12, 12, 12, 3, 5, 3, NULL, 5, 13, 1, 'Saturday', '11:00:00', '13:00:00', '2', '1'),
+(13, 13, 13, 3, 5, 2, NULL, 5, 13, 1, 'Sunday', '09:00:00', '11:00:00', '1', '1'),
+(14, 14, 14, 3, 5, 1, NULL, 5, 13, 1, 'Tuesday', '11:00:00', '13:00:00', '1', '1'),
+(15, 15, 15, 3, 5, 2, NULL, 5, 13, 1, 'Thursday', '09:00:00', '11:00:00', '2', '1');
 
 -- --------------------------------------------------------
 

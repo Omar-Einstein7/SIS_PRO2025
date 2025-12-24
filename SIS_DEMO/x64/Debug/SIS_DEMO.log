@@ -1,6 +1,26 @@
 ﻿  AcademicCalendarForm.cpp
+  AddEditUserForm.cpp
+  AdminForm.cpp
+  AssignCourseForm.cpp
+  AttendanceForm.cpp
+  DataManager.cpp
+  EnterGradesForm.cpp
+  GradesListForm.cpp
+  LoginForm.cpp
+  MainForm.cpp
+  PaymentForm.cpp
+  PaymentsListForm.cpp
   ProfForm.cpp
   RegisterCourseForm.cpp
+  RegisterStudentForm.cpp
+  ScheduleForm.cpp
+  StudentForm.cpp
+  StudentGradesViewForm.cpp
+  StudentPaymentsViewForm.cpp
+  StudentRegisteredCoursesForm.cpp
+  Generating Code...
+  Compiling...
+  StudentsListForm.cpp
   Generating Code...
   AcademicCalendarForm.obj : MSIL module encountered; incremental linking is disabled for MSIL; performing full link
   SIS_DEMO.vcxproj -> C:\Users\Omar Ahmed\Documents\SIS_PRO2025\x64\Debug\SIS_DEMO.exe

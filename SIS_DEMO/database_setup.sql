@@ -187,6 +187,10 @@ CREATE TABLE IF NOT EXISTS academic_schedule (
     academic_year_id INT,
     semester_id INT,
     location_id INT,
+    custom_location VARCHAR(255),
+    faculty_id INT,
+    department_id INT,
+    academic_level_id INT,
     day_of_week VARCHAR(10) NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
@@ -196,7 +200,10 @@ CREATE TABLE IF NOT EXISTS academic_schedule (
     FOREIGN KEY (instructor_id) REFERENCES instructors(instructor_id) ON DELETE CASCADE,
     FOREIGN KEY (academic_year_id) REFERENCES academic_years(academic_year_id) ON DELETE CASCADE,
     FOREIGN KEY (semester_id) REFERENCES semesters(semester_id) ON DELETE CASCADE,
-    FOREIGN KEY (location_id) REFERENCES locations(location_id) ON DELETE CASCADE
+    FOREIGN KEY (location_id) REFERENCES locations(location_id) ON DELETE CASCADE,
+    FOREIGN KEY (faculty_id) REFERENCES faculties(faculty_id) ON DELETE CASCADE,
+    FOREIGN KEY (department_id) REFERENCES departments(department_id) ON DELETE CASCADE,
+    FOREIGN KEY (academic_level_id) REFERENCES academic_levels(level_id) ON DELETE CASCADE
 );
 
 -- 17. Attendance Table
@@ -249,10 +256,9 @@ CREATE TABLE IF NOT EXISTS academic_calendar (
     calendar_id INT AUTO_INCREMENT PRIMARY KEY,
     academic_year_id INT,
     semester_id INT,
-    event_title VARCHAR(100),
-    event_type VARCHAR(50),
-    start_date DATE,
-    end_date DATE,
+    event_name VARCHAR(100),
+    event_date DATE,
+    description TEXT,
     FOREIGN KEY (academic_year_id) REFERENCES academic_years(academic_year_id) ON DELETE CASCADE,
     FOREIGN KEY (semester_id) REFERENCES semesters(semester_id) ON DELETE CASCADE
 );

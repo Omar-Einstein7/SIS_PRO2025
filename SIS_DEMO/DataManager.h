@@ -15,6 +15,10 @@ namespace SIS {
     private:
         static String^ connStr = "";
 
+        inline static String^ SafeString(Object^ obj) {
+            return (obj == nullptr || obj == DBNull::Value) ? "" : obj->ToString();
+        }
+
         inline static MySqlConnection^ OpenConn()
         {
             array<String^>^ connectionAttempts = {
@@ -155,7 +159,7 @@ namespace SIS {
                     "CREATE TABLE IF NOT EXISTS lecture_halls ( hall_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, product_id VARCHAR(20), hall_name VARCHAR(100) NOT NULL, description TEXT, capacity INT, seats INT, air_conditioning_units INT, fans INT, lighting_units INT ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
                     "CREATE TABLE IF NOT EXISTS laboratories ( lab_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, product_id VARCHAR(20), lab_name VARCHAR(100) NOT NULL, description TEXT, capacity INT, computers_count INT, seats INT, air_conditioning_units INT, fans INT, lighting_units INT ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
                     "CREATE TABLE IF NOT EXISTS locations ( location_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, location_type VARCHAR(10) NOT NULL, hall_id INT, lab_id INT ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
-                    "CREATE TABLE IF NOT EXISTS academic_schedule ( schedule_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, course_id INT, instructor_id INT, academic_year_id INT, semester_id INT, location_id INT, day_of_week VARCHAR(10) NOT NULL, start_time TIME NOT NULL, end_time TIME NOT NULL, group_number VARCHAR(10), section_number VARCHAR(10) ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS academic_schedule ( schedule_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, course_id INT, instructor_id INT, academic_year_id INT, semester_id INT, location_id INT, custom_location VARCHAR(255), faculty_id INT, department_id INT, academic_level_id INT, day_of_week VARCHAR(10) NOT NULL, start_time TIME NOT NULL, end_time TIME NOT NULL, group_number VARCHAR(10), section_number VARCHAR(10) ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
                     "CREATE TABLE IF NOT EXISTS attendance ( attendance_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, student_id INT, course_id INT, semester_id INT, lecture_date DATE, status VARCHAR(10) ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
                     "CREATE TABLE IF NOT EXISTS grades ( grade_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, student_id INT, course_id INT, semester_id INT, assignment1 DECIMAL(5,2), assignment2 DECIMAL(5,2), coursework DECIMAL(5,2), final_exam DECIMAL(5,2), total_score DECIMAL(5,2), grade_evaluation VARCHAR(2) ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
                     
@@ -168,6 +172,29 @@ namespace SIS {
                     auto cmd = gcnew MySqlCommand(q, c);
                     cmd->ExecuteNonQuery();
                 }
+
+                // Ensure custom_location and other missing columns exist in academic_schedule
+                try {
+                    array<String^>^ colsToAdd = { 
+                        "custom_location VARCHAR(255) AFTER location_id",
+                        "faculty_id INT AFTER custom_location",
+                        "department_id INT AFTER faculty_id",
+                        "academic_level_id INT AFTER department_id"
+                    };
+                    array<String^>^ colNames = { "custom_location", "faculty_id", "department_id", "academic_level_id" };
+                    
+                    for (int i = 0; i < colNames->Length; i++) {
+                        auto cmdCheck = gcnew MySqlCommand("SHOW COLUMNS FROM academic_schedule LIKE '" + colNames[i] + "'", c);
+                        auto r = cmdCheck->ExecuteReader();
+                        bool exists = r->Read();
+                        r->Close();
+                        if (!exists) {
+                            auto cmdAdd = gcnew MySqlCommand("ALTER TABLE academic_schedule ADD COLUMN " + colsToAdd[i], c);
+                            cmdAdd->ExecuteNonQuery();
+                        }
+                    }
+                } catch (...) {}
+
                 c->Close();
                 InsertInitialData();
             }
@@ -521,7 +548,6 @@ namespace SIS {
                 auto r = cmd->ExecuteReader();
                 String^ out = "";
                 if (r->Read()) {
-                    auto SafeString = [](Object^ obj) { return (obj == nullptr || obj == DBNull::Value) ? "" : obj->ToString(); };
                     out = SafeString(r["student_id"]) + "|" + SafeString(r["full_name"]) + "|" +
                         SafeString(r["email"]) + "|" + SafeString(r["phone"]) + "|" + 
                         SafeString(r["national_id"]) + "|" + SafeString(r["department_id"]) + "|" +
@@ -1226,30 +1252,57 @@ namespace SIS {
             return list;
         }
 
-        inline static List<String^>^ ReadScheduleForStudent(int sid) {
+        inline static List<String^>^ ReadAllAcademicYears() {
+            return ReadAllYears();
+        }
+
+        inline static List<String^>^ ReadAllAcademicLevels() {
+            return ReadAllLevels();
+        }
+
+        // Removed duplicate ReadScheduleForStudent
+        inline static List<String^>^ ReadScheduleForStudent(int studentId)
+        {
             auto list = gcnew List<String^>();
             try {
                 auto c = OpenConn();
-                auto cmd = gcnew MySqlCommand(
-                    "SELECT c.course_name, s.day_of_week, s.start_time, s.end_time, "
-                    "COALESCE(h.hall_name, l.lab_name, 'TBA') as location_name "
-                    "FROM academic_schedule s "
-                    "JOIN courses c ON s.course_id = c.course_id "
-                    "LEFT JOIN locations loc ON s.location_id = loc.location_id "
-                    "LEFT JOIN lecture_halls h ON loc.hall_id = h.hall_id "
-                    "LEFT JOIN laboratories l ON loc.lab_id = l.lab_id "
-                    "JOIN student_course_enrollment e ON s.course_id = e.course_id "
-                    "WHERE e.student_id = @sid", c);
-                cmd->Parameters->AddWithValue("@sid", sid);
-                auto r = cmd->ExecuteReader();
-                while (r->Read()) {
-                    list->Add(r["course_name"]->ToString() + "|" + 
-                             r["day_of_week"]->ToString() + "|" + 
-                             r["start_time"]->ToString() + "|" + 
-                             r["end_time"]->ToString() + "|" + 
-                             r["location_name"]->ToString());
+                // We need to find the student's department, faculty, and level
+                auto studentCmd = gcnew MySqlCommand("SELECT faculty_id, department_id, academic_level_id FROM students WHERE student_id = @sid", c);
+                studentCmd->Parameters->AddWithValue("@sid", studentId);
+                auto sr = studentCmd->ExecuteReader();
+                int fid = -1, did = -1, alid = -1;
+                if (sr->Read()) {
+                    fid = (sr["faculty_id"] == DBNull::Value) ? -1 : Convert::ToInt32(sr["faculty_id"]);
+                    did = (sr["department_id"] == DBNull::Value) ? -1 : Convert::ToInt32(sr["department_id"]);
+                    alid = (sr["academic_level_id"] == DBNull::Value) ? -1 : Convert::ToInt32(sr["academic_level_id"]);
                 }
-                r->Close(); c->Close();
+                sr->Close();
+
+                if (fid != -1) {
+                    auto cmd = gcnew MySqlCommand(
+                        "SELECT c.course_name, i.full_name as prof_name, sch.day_of_week, sch.start_time, sch.end_time, "
+                        "CASE WHEN sch.location_id IS NULL THEN sch.custom_location "
+                        "     WHEN l.location_type = 'Hall' THEN lh.hall_name ELSE lb.lab_name END as loc_name "
+                        "FROM academic_schedule sch "
+                        "JOIN courses c ON sch.course_id = c.course_id "
+                        "JOIN instructors i ON sch.instructor_id = i.instructor_id "
+                        "LEFT JOIN locations l ON sch.location_id = l.location_id "
+                        "LEFT JOIN lecture_halls lh ON l.hall_id = lh.hall_id "
+                        "LEFT JOIN laboratories lb ON l.lab_id = lb.lab_id "
+                        "WHERE sch.faculty_id = @fid AND sch.department_id = @did AND sch.academic_level_id = @alid "
+                        "ORDER BY FIELD(sch.day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), sch.start_time", c);
+                    cmd->Parameters->AddWithValue("@fid", fid);
+                    cmd->Parameters->AddWithValue("@did", did);
+                    cmd->Parameters->AddWithValue("@alid", alid);
+                    auto r = cmd->ExecuteReader();
+                    while (r->Read()) {
+                        list->Add(r["day_of_week"]->ToString() + "|" + r["course_name"]->ToString() + "|" + 
+                                 r["prof_name"]->ToString() + "|" + r["loc_name"]->ToString() + "|" + 
+                                 r["start_time"]->ToString() + "|" + r["end_time"]->ToString());
+                    }
+                    r->Close();
+                }
+                c->Close();
             } catch (...) {}
             return list;
         }
@@ -1342,6 +1395,185 @@ namespace SIS {
                 auto r = cmd->ExecuteReader();
                 while (r->Read())
                     list->Add(r["hall_id"]->ToString() + "," + r["hall_name"]->ToString() + "," + r["capacity"]->ToString());
+                r->Close(); c->Close();
+            } catch (...) {}
+            return list;
+        }
+
+        inline static bool AddLectureHall(String^ name, int capacity)
+        {
+            try {
+                auto c = OpenConn();
+                auto trans = c->BeginTransaction();
+                try {
+                    auto cmdHall = gcnew MySqlCommand("INSERT INTO lecture_halls (hall_name, capacity) VALUES (@n, @c); SELECT LAST_INSERT_ID();", c, trans);
+                    cmdHall->Parameters->AddWithValue("@n", name);
+                    cmdHall->Parameters->AddWithValue("@c", capacity);
+                    int hallId = Convert::ToInt32(cmdHall->ExecuteScalar());
+
+                    auto cmdLoc = gcnew MySqlCommand("INSERT INTO locations (location_type, hall_id) VALUES ('Hall', @hid)", c, trans);
+                    cmdLoc->Parameters->AddWithValue("@hid", hallId);
+                    cmdLoc->ExecuteNonQuery();
+
+                    trans->Commit();
+                    c->Close();
+                    return true;
+                } catch (...) { trans->Rollback(); throw; }
+            } catch (...) { return false; }
+        }
+
+        inline static bool AddLaboratory(String^ name, int capacity)
+        {
+            try {
+                auto c = OpenConn();
+                auto trans = c->BeginTransaction();
+                try {
+                    auto cmdLab = gcnew MySqlCommand("INSERT INTO laboratories (lab_name, capacity) VALUES (@n, @c); SELECT LAST_INSERT_ID();", c, trans);
+                    cmdLab->Parameters->AddWithValue("@n", name);
+                    cmdLab->Parameters->AddWithValue("@c", capacity);
+                    int labId = Convert::ToInt32(cmdLab->ExecuteScalar());
+
+                    auto cmdLoc = gcnew MySqlCommand("INSERT INTO locations (location_type, lab_id) VALUES ('Lab', @lid)", c, trans);
+                    cmdLoc->Parameters->AddWithValue("@lid", labId);
+                    cmdLoc->ExecuteNonQuery();
+
+                    trans->Commit();
+                    c->Close();
+                    return true;
+                } catch (...) { trans->Rollback(); throw; }
+            } catch (...) { return false; }
+        }
+
+        inline static bool DeleteLocation(int locationId)
+        {
+            try {
+                auto c = OpenConn();
+                auto trans = c->BeginTransaction();
+                try {
+                    auto cmdGet = gcnew MySqlCommand("SELECT location_type, hall_id, lab_id FROM locations WHERE location_id = @id", c, trans);
+                    cmdGet->Parameters->AddWithValue("@id", locationId);
+                    auto r = cmdGet->ExecuteReader();
+                    String^ type = "";
+                    int subId = -1;
+                    if (r->Read()) {
+                        type = r["location_type"]->ToString();
+                        subId = (type == "Hall") ? Convert::ToInt32(r["hall_id"]) : Convert::ToInt32(r["lab_id"]);
+                    }
+                    r->Close();
+
+                    if (subId != -1) {
+                        auto cmdDelLoc = gcnew MySqlCommand("DELETE FROM locations WHERE location_id = @id", c, trans);
+                        cmdDelLoc->Parameters->AddWithValue("@id", locationId);
+                        cmdDelLoc->ExecuteNonQuery();
+
+                        String^ tbl = (type == "Hall") ? "lecture_halls" : "laboratories";
+                        String^ col = (type == "Hall") ? "hall_id" : "lab_id";
+                        auto cmdDelSub = gcnew MySqlCommand("DELETE FROM " + tbl + " WHERE " + col + " = @sid", c, trans);
+                        cmdDelSub->Parameters->AddWithValue("@sid", subId);
+                        cmdDelSub->ExecuteNonQuery();
+                    }
+
+                    trans->Commit();
+                    c->Close();
+                    return true;
+                } catch (...) { trans->Rollback(); throw; }
+            } catch (...) { return false; }
+        }
+
+        // Schedule
+        inline static String^ SaveScheduleWithResult(int courseId, int profId, int yearId, int semId, int locId, String^ customLoc, int facId, int deptId, int levelId, String^ day, String^ start, String^ end)
+        {
+            try {
+                auto c = OpenConn();
+                auto cmd = gcnew MySqlCommand(
+                    "INSERT INTO academic_schedule (course_id, instructor_id, academic_year_id, semester_id, location_id, custom_location, faculty_id, department_id, academic_level_id, day_of_week, start_time, end_time) "
+                    "VALUES (@cid, @iid, @yid, @sid, @lid, @cust, @fid, @did, @alid, @day, @start, @end)", c);
+                cmd->Parameters->AddWithValue("@cid", courseId);
+                cmd->Parameters->AddWithValue("@iid", profId);
+                cmd->Parameters->AddWithValue("@yid", yearId);
+                cmd->Parameters->AddWithValue("@sid", semId);
+                if (locId == -1)
+                    cmd->Parameters->AddWithValue("@lid", DBNull::Value);
+                else
+                    cmd->Parameters->AddWithValue("@lid", locId);
+                cmd->Parameters->AddWithValue("@cust", String::IsNullOrEmpty(customLoc) ? (Object^)DBNull::Value : customLoc);
+                cmd->Parameters->AddWithValue("@fid", facId);
+                cmd->Parameters->AddWithValue("@did", deptId);
+                cmd->Parameters->AddWithValue("@alid", levelId);
+                cmd->Parameters->AddWithValue("@day", day);
+                cmd->Parameters->AddWithValue("@start", start);
+                cmd->Parameters->AddWithValue("@end", end);
+                cmd->ExecuteNonQuery();
+                c->Close();
+                return "SUCCESS";
+            } catch (Exception^ ex) { 
+                return ex->Message; 
+            }
+        }
+
+        inline static bool SaveSchedule(int courseId, int profId, int yearId, int semId, int locId, String^ customLoc, int facId, int deptId, int levelId, String^ day, String^ start, String^ end)
+        {
+            return SaveScheduleWithResult(courseId, profId, yearId, semId, locId, customLoc, facId, deptId, levelId, day, start, end) == "SUCCESS";
+        }
+
+        inline static List<String^>^ ReadAllSchedules()
+        {
+            auto list = gcnew List<String^>();
+            try {
+                auto c = OpenConn();
+                auto cmd = gcnew MySqlCommand(
+                    "SELECT sch.schedule_id, c.course_name, i.full_name as prof_name, f.faculty_name, d.department_name, al.level_name, "
+                    "sch.day_of_week, sch.start_time, sch.end_time, "
+                    "CASE WHEN sch.location_id IS NULL THEN sch.custom_location "
+                    "     WHEN l.location_type = 'Hall' THEN lh.hall_name ELSE lb.lab_name END as loc_name "
+                    "FROM academic_schedule sch "
+                    "JOIN courses c ON sch.course_id = c.course_id "
+                    "JOIN instructors i ON sch.instructor_id = i.instructor_id "
+                    "JOIN faculties f ON sch.faculty_id = f.faculty_id "
+                    "JOIN departments d ON sch.department_id = d.department_id "
+                    "JOIN academic_levels al ON sch.academic_level_id = al.level_id "
+                    "LEFT JOIN locations l ON sch.location_id = l.location_id "
+                    "LEFT JOIN lecture_halls lh ON l.hall_id = lh.hall_id "
+                    "LEFT JOIN laboratories lb ON l.lab_id = lb.lab_id", c);
+                auto r = cmd->ExecuteReader();
+                while (r->Read()) {
+                    list->Add(r["schedule_id"]->ToString() + "|" + r["course_name"]->ToString() + "|" + 
+                             r["prof_name"]->ToString() + "|" + r["faculty_name"]->ToString() + "|" + 
+                             r["department_name"]->ToString() + "|" + r["level_name"]->ToString() + "|" + 
+                             r["day_of_week"]->ToString() + "|" + r["start_time"]->ToString() + "|" + r["end_time"]->ToString() + "|" + 
+                             SafeString(r["loc_name"]));
+                }
+                r->Close(); c->Close();
+            } catch (...) {}
+            return list;
+        }
+
+        inline static bool DeleteSchedule(int id)
+        {
+            try {
+                auto c = OpenConn();
+                auto cmd = gcnew MySqlCommand("DELETE FROM academic_schedule WHERE schedule_id = @id", c);
+                cmd->Parameters->AddWithValue("@id", id);
+                cmd->ExecuteNonQuery();
+                c->Close();
+                return true;
+            } catch (...) { return false; }
+        }
+
+        inline static List<String^>^ ReadAllLocationsSimple()
+        {
+            auto list = gcnew List<String^>();
+            try {
+                auto c = OpenConn();
+                auto cmd = gcnew MySqlCommand(
+                    "SELECT l.location_id, l.location_type, "
+                    "CASE WHEN l.location_type = 'Hall' THEN lh.hall_name ELSE lb.lab_name END as loc_name "
+                    "FROM locations l "
+                    "LEFT JOIN lecture_halls lh ON l.hall_id = lh.hall_id "
+                    "LEFT JOIN laboratories lb ON l.lab_id = lb.lab_id", c);
+                auto r = cmd->ExecuteReader();
+                while (r->Read())
+                    list->Add(r["location_id"]->ToString() + "," + r["location_type"]->ToString() + " - " + r["loc_name"]->ToString());
                 r->Close(); c->Close();
             } catch (...) {}
             return list;
