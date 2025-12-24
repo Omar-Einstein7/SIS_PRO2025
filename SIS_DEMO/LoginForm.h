@@ -30,17 +30,24 @@ namespace SISDEMO {
 		{
 			InitializeComponent();
             ApplyModernTheme();
-            SIS::DataManager::Configure("localhost", "root", "root", "sis_db", 3306);
-            if (SIS::DataManager::TestConnection()) {
+            try {
+                // Try connecting with no password first (common for local dev)
+                SIS::DataManager::Configure("localhost", "root", "root", "sis_db", 3306);
+                SIS::DataManager::EnsureDatabaseInitialized();
+            } catch (Exception^ firstEx) {
+                // If it fails (likely Access Denied), try 'root' password
                 try {
-                    SIS::DataManager::CreateNewSchema();
-                    SIS::DataManager::InsertInitialData();
-                } catch (Exception^ ex) {
-                    MessageBox::Show("Database error: " + ex->Message, "Initialization Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+                    SIS::DataManager::Configure("localhost", "root", "root", "sis_db", 3306);
+                    SIS::DataManager::EnsureDatabaseInitialized();
+                } catch (Exception^ secondEx) {
+                    // Both failed. Show a helpful message.
+                    String^ msg = "Could not connect to MySQL server.\n\n" +
+                                 "Attempts:\n" +
+                                 "1. root@localhost (no password): " + firstEx->Message + "\n" +
+                                 "2. root@localhost (password 'root'): " + secondEx->Message + "\n\n" +
+                                 "Please ensure MySQL is running and the credentials are correct.";
+                    MessageBox::Show(msg, "Database Connection Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
                 }
-            } else {
-                MessageBox::Show("Could not connect to MySQL Server. Please check if MySQL is running and credentials in DataManager are correct.", 
-                    "Connection Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
             }
 		}
 

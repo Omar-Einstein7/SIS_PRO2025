@@ -231,7 +231,7 @@ Class SIS.DataManager: AutoLayout, AnsiClass, Class, Public, Sealed, BeforeField
   Methods:
     Configure(String, String, String, String, Int32): PrivateScope, Public, Static, HideBySig
     TestConnection(): PrivateScope, Public, Static, HideBySig
-    CreateNewSchema(): PrivateScope, Public, Static, HideBySig
+    EnsureDatabaseInitialized(): PrivateScope, Public, Static, HideBySig
     InsertInitialData(): PrivateScope, Public, Static, HideBySig
     GetStudentIdByUserId(Int32): PrivateScope, Public, Static, HideBySig
     GetStudentDetails(Int32): PrivateScope, Public, Static, HideBySig

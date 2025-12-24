@@ -23,3 +23,11 @@ C:\Omar\NCT\2 yaer\Assignemnt 2\SIS_PRO12\SIS_DEMO\x64\Debug\SISDEMO.MainForm.re
 C:\Omar\NCT\2 yaer\Assignemnt 2\SIS_PRO12\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.GenerateResource.cache
 C:\Omar\NCT\2 yaer\Assignemnt 2\SIS_PRO12\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.Up2Date
 C:\Omar\NCT\2 yaer\Assignemnt 2\SIS_PRO12\SIS_DEMO\x64\Debug\SIS_DEMO.exe
+C:\Users\Omar Ahmed\Documents\SIS_PRO2025\x64\Debug\SIS_DEMO.exe.config
+C:\Users\Omar Ahmed\Documents\SIS_PRO2025\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.AssemblyReference.cache
+C:\Users\Omar Ahmed\Documents\SIS_PRO2025\SIS_DEMO\x64\Debug\SISDEMO.AdminForm.resources
+C:\Users\Omar Ahmed\Documents\SIS_PRO2025\SIS_DEMO\x64\Debug\SISDEMO.LoginForm.resources
+C:\Users\Omar Ahmed\Documents\SIS_PRO2025\SIS_DEMO\x64\Debug\SISDEMO.MainForm.resources
+C:\Users\Omar Ahmed\Documents\SIS_PRO2025\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.GenerateResource.cache
+C:\Users\Omar Ahmed\Documents\SIS_PRO2025\SIS_DEMO\x64\Debug\SIS_DEMO.vcxproj.Up2Date
+C:\Users\Omar Ahmed\Documents\SIS_PRO2025\SIS_DEMO\x64\Debug\SIS_DEMO.exe

@@ -17,9 +17,50 @@ namespace SIS {
 
         inline static MySqlConnection^ OpenConn()
         {
-            MySqlConnection^ c = gcnew MySqlConnection(connStr);
-            c->Open();
-            return c;
+            array<String^>^ connectionAttempts = {
+                connStr, // 1. Current (with AllowPublicKeyRetrieval and UseSSL=false)
+                connStr->Replace("UseSSL=false", "SslMode=None"), // 2. Try SslMode=None
+                connStr->Replace(";UseSSL=false", "")->Replace(";AllowPublicKeyRetrieval=True", ""), // 3. Basic connection
+                connStr->Replace("UseSSL=false", "SslMode=0") // 4. Numeric SslMode
+            };
+
+            Exception^ lastEx = nullptr;
+            for each (String^ attemptStr in connectionAttempts) {
+                try {
+                    MySqlConnection^ c = gcnew MySqlConnection(attemptStr);
+                    c->Open();
+                    return c;
+                }
+                catch (Exception^ ex) {
+                    lastEx = ex;
+                    // If it's a "Requested value not found" error, continue to next attempt
+                    if (ex->Message->Contains("Requested value") || ex->Message->Contains("SslMode")) {
+                        continue;
+                    }
+                    // If it's a database missing error, we handle that specifically
+                    if (ex->Message->Contains("Unknown database")) {
+                        try {
+                            array<String^>^ parts = attemptStr->Split(';');
+                            String^ baseConn = "";
+                            String^ dbName = "";
+                            for each (String^ p in parts) {
+                                if (p->StartsWith("Database=")) dbName = p->Substring(9);
+                                else if (!String::IsNullOrEmpty(p)) baseConn += p + ";";
+                            }
+                            MySqlConnection^ cBase = gcnew MySqlConnection(baseConn);
+                            cBase->Open();
+                            (gcnew MySqlCommand("CREATE DATABASE IF NOT EXISTS " + dbName, cBase))->ExecuteNonQuery();
+                            cBase->Close();
+                            
+                            MySqlConnection^ cFinal = gcnew MySqlConnection(attemptStr);
+                            cFinal->Open();
+                            return cFinal;
+                        } catch (...) { /* ignore and try next attempt string */ }
+                    }
+                    // For other errors (like Access Denied), we might want to try the next attempt too
+                }
+            }
+            throw lastEx;
         }
 
     public:
@@ -36,7 +77,7 @@ namespace SIS {
                 ";Port=" + port.ToString() +
                 ";Database=" + db +
                 ";Uid=" + user +
-                ";Pwd=" + pass + ";AllowUserVariables=True;";
+                ";Pwd=" + pass + ";AllowUserVariables=True;AllowPublicKeyRetrieval=True;UseSSL=false;";
         }
 
         // Add this method to test the configured connection quickly
@@ -47,88 +88,80 @@ namespace SIS {
                 c->Close();
                 return true;
             }
-            catch (Exception^ ex) {
-                // If database doesn't exist, try to create it
-                if (ex->Message->Contains("Unknown database")) {
-                    try {
-                        // Extract server info from connStr to connect without DB
-                        array<String^>^ parts = connStr->Split(';');
-                        String^ baseConn = "";
-                        String^ dbName = "";
-                        for each (String^ p in parts) {
-                            if (p->StartsWith("Database=")) dbName = p->Substring(9);
-                            else if (!String::IsNullOrEmpty(p)) baseConn += p + ";";
-                        }
-                        
-                        MySqlConnection^ cBase = gcnew MySqlConnection(baseConn);
-                        cBase->Open();
-                        MySqlCommand^ cmd = gcnew MySqlCommand("CREATE DATABASE IF NOT EXISTS " + dbName, cBase);
-                        cmd->ExecuteNonQuery();
-                        cBase->Close();
-                        return true;
-                    } catch (...) { return false; }
-                }
+            catch (...) {
                 return false;
             }
         }
 
-        // Creates the new 21-table schema (Complete Overhaul aligned with user request)
-        inline static void CreateNewSchema()
+        // Ensures the database schema exists without dropping data.
+        inline static void EnsureDatabaseInitialized()
         {
             try {
                 auto c = OpenConn();
 
-                // Drop all tables in correct order to avoid FK issues
-                auto cmdFK0 = gcnew MySqlCommand("SET FOREIGN_KEY_CHECKS = 0", c);
-                cmdFK0->ExecuteNonQuery();
-                
-                array<String^>^ dropTables = {
-                    "news", "fees", "locations", "laboratories", "lecture_halls", "grades", 
-                    "attendance", "academic_schedule", "instructor_course_assignment", 
-                    "student_course_enrollment", "courses", "system_user", "administration_users", 
-                    "instructors", "students", "academic_calendar", "semesters", 
-                    "academic_years", "academic_levels", "departments", "faculties"
-                };
-
-                for each (String^ tbl in dropTables) {
-                    auto cmdDrop = gcnew MySqlCommand("DROP TABLE IF EXISTS " + tbl, c);
-                    cmdDrop->ExecuteNonQuery();
+                // Check if the database is already populated
+                bool isPopulated = false;
+                try {
+                    auto checkCmd = gcnew MySqlCommand("SELECT COUNT(*) FROM faculties", c);
+                    int count = Convert::ToInt32(checkCmd->ExecuteScalar());
+                    if (count > 0) isPopulated = true;
+                }
+                catch (...) {
+                    isPopulated = false; // Tables probably don't exist
                 }
 
-                auto cmdFK1 = gcnew MySqlCommand("SET FOREIGN_KEY_CHECKS = 1", c);
-                cmdFK1->ExecuteNonQuery();
+                // If not populated, try to load from uni.sql first
+                if (!isPopulated) {
+                    String^ exePath = System::IO::Path::GetDirectoryName(System::Reflection::Assembly::GetExecutingAssembly()->Location);
+                    String^ sqlPath = System::IO::Path::Combine(exePath, "uni.sql");
+                    
+                    // Also check project root (for development)
+                    if (!System::IO::File::Exists(sqlPath)) {
+                        sqlPath = "uni.sql"; 
+                    }
 
+                    if (System::IO::File::Exists(sqlPath)) {
+                        String^ scriptText = System::IO::File::ReadAllText(sqlPath);
+                        // MySqlScript can handle multiple statements and standard SQL dumps
+                        MySqlScript^ script = gcnew MySqlScript(c, scriptText);
+                        script->Execute();
+                        c->Close();
+                        return; // Successfully initialized from uni.sql
+                    }
+                }
+
+                // Fallback to hardcoded schema if uni.sql is missing or DB already has data
                 array<String^>^ queries = {
                     // 1. Academic Structure
-                    "CREATE TABLE faculties ( faculty_id INT AUTO_INCREMENT PRIMARY KEY, faculty_code VARCHAR(10), faculty_name VARCHAR(100) NOT NULL ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-                    "CREATE TABLE departments ( department_id INT AUTO_INCREMENT PRIMARY KEY, department_code VARCHAR(10), department_name VARCHAR(100) NOT NULL, faculty_id INT ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-                    "CREATE TABLE academic_levels ( level_id INT AUTO_INCREMENT PRIMARY KEY, level_name VARCHAR(50) NOT NULL ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-                    "CREATE TABLE academic_years ( academic_year_id INT AUTO_INCREMENT PRIMARY KEY, year_name VARCHAR(20), start_date DATE, end_date DATE ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-                    "CREATE TABLE semesters ( semester_id INT AUTO_INCREMENT PRIMARY KEY, semester_name VARCHAR(20), start_date DATE, end_date DATE, academic_year_id INT ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-                    "CREATE TABLE academic_calendar ( calendar_id INT AUTO_INCREMENT PRIMARY KEY, academic_year_id INT, semester_id INT, event_title VARCHAR(100), event_type VARCHAR(50), start_date DATE, end_date DATE ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
+                    "CREATE TABLE IF NOT EXISTS faculties ( faculty_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, faculty_code VARCHAR(10), faculty_name VARCHAR(100) NOT NULL ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS departments ( department_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, department_code VARCHAR(10), department_name VARCHAR(100) NOT NULL, faculty_id INT ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS academic_levels ( level_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, level_name VARCHAR(50) NOT NULL ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS academic_years ( academic_year_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, year_name VARCHAR(20), start_date DATE, end_date DATE ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS semesters ( semester_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, semester_name VARCHAR(20), start_date DATE, end_date DATE, academic_year_id INT ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS academic_calendar ( calendar_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, academic_year_id INT, semester_id INT, event_title VARCHAR(100), event_type VARCHAR(50), start_date DATE, end_date DATE ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
                     
                     // 2. People & Auth
-                    "CREATE TABLE system_user ( user_id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(100) UNIQUE, password_hash VARCHAR(255), user_type VARCHAR(20) ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-                    "CREATE TABLE administration_users ( admin_id INT AUTO_INCREMENT PRIMARY KEY, full_name VARCHAR(100) NOT NULL, email VARCHAR(100) NOT NULL, role VARCHAR(50) ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-                    "CREATE TABLE instructors ( instructor_id INT AUTO_INCREMENT PRIMARY KEY, full_name VARCHAR(100), instructor_type VARCHAR(20), specialization VARCHAR(50), email VARCHAR(100), phone VARCHAR(15), faculty_id INT, department_id INT, hire_date DATE ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-                    "CREATE TABLE students ( student_id INT PRIMARY KEY, full_name VARCHAR(100), national_id VARCHAR(20), email VARCHAR(100), phone VARCHAR(15), academic_year_id INT, semester_id INT, academic_level_id INT, faculty_id INT, department_id INT, group_number VARCHAR(10), section_number VARCHAR(10), enrollment_date DATE, GPA DECIMAL(3,2), final_grade VARCHAR(2) ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
+                    "CREATE TABLE IF NOT EXISTS system_user ( user_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(100) UNIQUE, password_hash VARCHAR(255), user_type VARCHAR(20) ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS administration_users ( admin_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, full_name VARCHAR(100) NOT NULL, email VARCHAR(100) NOT NULL, role VARCHAR(50) ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS instructors ( instructor_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, full_name VARCHAR(100), instructor_type VARCHAR(20), specialization VARCHAR(50), email VARCHAR(100), phone VARCHAR(15), faculty_id INT, department_id INT, hire_date DATE ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS students ( student_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, full_name VARCHAR(100), national_id VARCHAR(20), email VARCHAR(100), phone VARCHAR(15), academic_year_id INT, semester_id INT, academic_level_id INT, faculty_id INT, department_id INT, group_number VARCHAR(10), section_number VARCHAR(10), enrollment_date DATE, GPA DECIMAL(3,2), final_grade VARCHAR(2) ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
                     
                     // 3. Courses
-                    "CREATE TABLE courses ( course_id INT AUTO_INCREMENT PRIMARY KEY, course_code VARCHAR(10), course_name VARCHAR(100), description TEXT, course_type VARCHAR(50), max_degree INT, credit_hours DECIMAL(3,1) ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-                    "CREATE TABLE student_course_enrollment ( student_course_id INT AUTO_INCREMENT PRIMARY KEY, student_id INT, course_id INT, academic_year_id INT, semester_id INT, enrollment_date DATE ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-                    "CREATE TABLE instructor_course_assignment ( id INT AUTO_INCREMENT PRIMARY KEY, instructor_id INT, course_id INT, academic_year_id INT, semester_id INT ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
+                    "CREATE TABLE IF NOT EXISTS courses ( course_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, course_code VARCHAR(10), course_name VARCHAR(100), description TEXT, course_type VARCHAR(50), max_degree INT, credit_hours DECIMAL(3,1) ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS student_course_enrollment ( student_course_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, student_id INT, course_id INT, academic_year_id INT, semester_id INT, enrollment_date DATE ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS instructor_course_assignment ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, instructor_id INT, course_id INT, academic_year_id INT, semester_id INT ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
                     
                     // 4. Academic Activities
-                    "CREATE TABLE lecture_halls ( hall_id INT AUTO_INCREMENT PRIMARY KEY, product_id VARCHAR(20), hall_name VARCHAR(100) NOT NULL, description TEXT, capacity INT, seats INT, air_conditioning_units INT, fans INT, lighting_units INT ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-                    "CREATE TABLE laboratories ( lab_id INT AUTO_INCREMENT PRIMARY KEY, product_id VARCHAR(20), lab_name VARCHAR(100) NOT NULL, description TEXT, capacity INT, computers_count INT, seats INT, air_conditioning_units INT, fans INT, lighting_units INT ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-                    "CREATE TABLE locations ( location_id INT AUTO_INCREMENT PRIMARY KEY, location_type VARCHAR(10) NOT NULL, hall_id INT, lab_id INT ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-                    "CREATE TABLE academic_schedule ( schedule_id INT AUTO_INCREMENT PRIMARY KEY, course_id INT, instructor_id INT, academic_year_id INT, semester_id INT, location_id INT, day_of_week VARCHAR(10) NOT NULL, start_time TIME NOT NULL, end_time TIME NOT NULL, group_number VARCHAR(10), section_number VARCHAR(10) ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-                    "CREATE TABLE attendance ( attendance_id INT AUTO_INCREMENT PRIMARY KEY, student_id INT, course_id INT, semester_id INT, lecture_date DATE, status VARCHAR(10) ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-                    "CREATE TABLE grades ( grade_id INT AUTO_INCREMENT PRIMARY KEY, student_id INT, course_id INT, semester_id INT, assignment1 DECIMAL(5,2), assignment2 DECIMAL(5,2), coursework DECIMAL(5,2), final_exam DECIMAL(5,2), total_score DECIMAL(5,2), grade_evaluation VARCHAR(2) ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
+                    "CREATE TABLE IF NOT EXISTS lecture_halls ( hall_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, product_id VARCHAR(20), hall_name VARCHAR(100) NOT NULL, description TEXT, capacity INT, seats INT, air_conditioning_units INT, fans INT, lighting_units INT ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS laboratories ( lab_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, product_id VARCHAR(20), lab_name VARCHAR(100) NOT NULL, description TEXT, capacity INT, computers_count INT, seats INT, air_conditioning_units INT, fans INT, lighting_units INT ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS locations ( location_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, location_type VARCHAR(10) NOT NULL, hall_id INT, lab_id INT ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS academic_schedule ( schedule_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, course_id INT, instructor_id INT, academic_year_id INT, semester_id INT, location_id INT, day_of_week VARCHAR(10) NOT NULL, start_time TIME NOT NULL, end_time TIME NOT NULL, group_number VARCHAR(10), section_number VARCHAR(10) ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS attendance ( attendance_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, student_id INT, course_id INT, semester_id INT, lecture_date DATE, status VARCHAR(10) ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS grades ( grade_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, student_id INT, course_id INT, semester_id INT, assignment1 DECIMAL(5,2), assignment2 DECIMAL(5,2), coursework DECIMAL(5,2), final_exam DECIMAL(5,2), total_score DECIMAL(5,2), grade_evaluation VARCHAR(2) ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
                     
                     // 5. Fees & News
-                    "CREATE TABLE fees ( fee_id INT AUTO_INCREMENT PRIMARY KEY, student_id INT, academic_year_id INT, semester_id INT, total_amount DECIMAL(10,2), paid_amount DECIMAL(10,2), payment_date DATE, payment_status VARCHAR(50) ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
-                    "CREATE TABLE news ( news_id INT AUTO_INCREMENT PRIMARY KEY, title VARCHAR(200), description TEXT, posted_by_user_id INT, post_date DATE, visible_to VARCHAR(50) ) ENGINE=MyISAM DEFAULT CHARSET=latin1;"
+                    "CREATE TABLE IF NOT EXISTS fees ( fee_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, student_id INT, academic_year_id INT, semester_id INT, total_amount DECIMAL(10,2), paid_amount DECIMAL(10,2), payment_date DATE, payment_status VARCHAR(50) ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;",
+                    "CREATE TABLE IF NOT EXISTS news ( news_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, title VARCHAR(200), description TEXT, posted_by_user_id INT, post_date DATE, visible_to VARCHAR(50) ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;"
                 };
 
                 for each (String^ q in queries) {
@@ -138,8 +171,8 @@ namespace SIS {
                 c->Close();
                 InsertInitialData();
             }
-            catch (Exception^) {
-                // throw; // Enable for debugging
+            catch (Exception^ ex) {
+                throw ex; // Re-throw to allow caller (LoginForm) to handle connection issues
             }
         }
 
@@ -362,14 +395,14 @@ namespace SIS {
                 auto c = OpenConn();
                 auto trans = c->BeginTransaction();
                 try {
-                    // 1. Insert into system_user
+                    // 1. Insert into system_user - force user_id to match sid
                     String^ hashedPassword = HashPassword(pass);
                     auto cmdUser = gcnew MySqlCommand(
-                        "INSERT INTO system_user(username, password_hash, user_type) VALUES(@u, @p, 'student')", c, trans);
+                        "INSERT INTO system_user(user_id, username, password_hash, user_type) VALUES(@sid, @u, @p, 'Student')", c, trans);
+                    cmdUser->Parameters->AddWithValue("@sid", sid);
                     cmdUser->Parameters->AddWithValue("@u", user);
                     cmdUser->Parameters->AddWithValue("@p", hashedPassword);
                     cmdUser->ExecuteNonQuery();
-                    int userId = (int)cmdUser->LastInsertedId;
 
                     // 2. Insert into students
                     auto cmdStudent = gcnew MySqlCommand(
@@ -393,12 +426,13 @@ namespace SIS {
                     c->Close();
                     return true;
                 }
-                catch (Exception^) {
+                catch (Exception^ ex) {
                     trans->Rollback();
-                    throw;
+                    c->Close();
+                    throw ex;
                 }
             }
-            catch (Exception^) { throw; }
+            catch (Exception^ ex) { throw ex; }
         }
 
         inline static bool UpdateStudent(int id, String^ fullName, String^ email, String^ phone, String^ nationalId, int deptId, int facultyId, int levelId, int yearId, int semId, String^ groupNum, String^ sectionNum)
@@ -420,25 +454,31 @@ namespace SIS {
                 cmd->Parameters->AddWithValue("@s", semId);
                 cmd->Parameters->AddWithValue("@gn", groupNum);
                 cmd->Parameters->AddWithValue("@sn", sectionNum);
-                cmd->ExecuteNonQuery();
+
+                int rows = cmd->ExecuteNonQuery();
                 c->Close();
-                return true;
+                return rows > 0;
             }
-            catch (Exception^) { throw; }
+            catch (Exception^ ex) { throw ex; }
         }
 
         inline static bool DeleteStudent(int id)
         {
             try {
                 auto c = OpenConn();
-                // Since there's no user_id link in uni.sql, we just delete from students.
+                // Delete from both tables since they share the same ID
                 auto cmdDelStudent = gcnew MySqlCommand("DELETE FROM students WHERE student_id=@id", c);
                 cmdDelStudent->Parameters->AddWithValue("@id", id);
                 cmdDelStudent->ExecuteNonQuery();
+
+                auto cmdDelUser = gcnew MySqlCommand("DELETE FROM system_user WHERE user_id=@id", c);
+                cmdDelUser->Parameters->AddWithValue("@id", id);
+                cmdDelUser->ExecuteNonQuery();
+
                 c->Close();
                 return true;
             }
-            catch (Exception^) { throw; }
+            catch (Exception^) { return false; }
         }
 
         inline static List<String^>^ ReadAllStudents()
@@ -472,12 +512,13 @@ namespace SIS {
                 auto r = cmd->ExecuteReader();
                 String^ out = "";
                 if (r->Read()) {
-                    out = r["student_id"]->ToString() + "|" + r["full_name"]->ToString() + "|" +
-                        r["email"]->ToString() + "|" + r["phone"]->ToString() + "|" + 
-                        r["national_id"]->ToString() + "|" + r["department_id"]->ToString() + "|" +
-                        r["faculty_id"]->ToString() + "|" + r["academic_level_id"]->ToString() + "|" +
-                        r["academic_year_id"]->ToString() + "|" + r["semester_id"]->ToString() + "|" +
-                        r["group_number"]->ToString() + "|" + r["section_number"]->ToString();
+                    auto SafeString = [](Object^ obj) { return (obj == nullptr || obj == DBNull::Value) ? "" : obj->ToString(); };
+                    out = SafeString(r["student_id"]) + "|" + SafeString(r["full_name"]) + "|" +
+                        SafeString(r["email"]) + "|" + SafeString(r["phone"]) + "|" + 
+                        SafeString(r["national_id"]) + "|" + SafeString(r["department_id"]) + "|" +
+                        SafeString(r["faculty_id"]) + "|" + SafeString(r["academic_level_id"]) + "|" +
+                        SafeString(r["academic_year_id"]) + "|" + SafeString(r["semester_id"]) + "|" +
+                        SafeString(r["group_number"]) + "|" + SafeString(r["section_number"]);
                 }
                 r->Close(); c->Close();
                 return out;
@@ -491,14 +532,14 @@ namespace SIS {
                 auto c = OpenConn();
                 auto trans = c->BeginTransaction();
                 try {
-                    // 1. Insert into system_user
+                    // 1. Insert into system_user - force user_id to match profId
                     String^ hashedPassword = HashPassword(password);
                     auto cmdUser = gcnew MySqlCommand(
-                        "INSERT INTO system_user(username, password_hash, user_type) VALUES(@u, @p, 'professor')", c, trans);
+                        "INSERT INTO system_user(user_id, username, password_hash, user_type) VALUES(@pid, @u, @p, 'Instructor')", c, trans);
+                    cmdUser->Parameters->AddWithValue("@pid", profId);
                     cmdUser->Parameters->AddWithValue("@u", username);
                     cmdUser->Parameters->AddWithValue("@p", hashedPassword);
                     cmdUser->ExecuteNonQuery();
-                    int userId = (int)cmdUser->LastInsertedId;
 
                     // 2. Insert into instructors
                     auto cmdProf = gcnew MySqlCommand(
@@ -547,14 +588,19 @@ namespace SIS {
         inline static bool DeleteProfessor(int profId) {
             try {
                 auto c = OpenConn();
-                // Since there's no user_id link in uni.sql, we just delete from instructors.
+                // Delete from both tables since they share the same ID
                 auto cmdDelProf = gcnew MySqlCommand("DELETE FROM instructors WHERE instructor_id=@pid", c);
                 cmdDelProf->Parameters->AddWithValue("@pid", profId);
                 cmdDelProf->ExecuteNonQuery();
+
+                auto cmdDelUser = gcnew MySqlCommand("DELETE FROM system_user WHERE user_id=@pid", c);
+                cmdDelUser->Parameters->AddWithValue("@pid", profId);
+                cmdDelUser->ExecuteNonQuery();
+
                 c->Close();
                 return true;
             }
-            catch (Exception^) { throw; }
+            catch (Exception^) { return false; }
         }
 
         inline static List<String^>^ ReadAllProfessors() {

@@ -408,25 +408,33 @@ namespace SISDEMO {
 
     private: System::Void btnSave_Click(System::Object^ sender, System::EventArgs^ e) {
         try {
-            String^ user = this->txtUser->Text;
+            String^ user = this->txtUser->Text->Trim();
             String^ pass = this->txtPass->Text;
-            String^ fullName = this->txtFirstName->Text;
-            String^ email = this->txtEmail->Text;
-            String^ phone = this->txtPhone->Text;
-            String^ nationalId = this->txtNationalID->Text;
+            String^ fullName = this->txtFirstName->Text->Trim();
+            String^ email = this->txtEmail->Text->Trim();
+            String^ phone = this->txtPhone->Text->Trim();
+            String^ nationalId = this->txtNationalID->Text->Trim();
             int sid = -1;
-            try { sid = Int32::Parse(this->txtID->Text); } catch(...) {}
+            if (!Int32::TryParse(this->txtID->Text->Trim(), sid)) sid = -1;
             
             int deptId = GetIdFromCombo(cmbDept);
             int facultyId = GetIdFromCombo(cmbFaculty);
             int levelId = GetIdFromCombo(cmbLevel);
             int yearId = GetIdFromCombo(cmbYear);
             int semId = GetIdFromCombo(cmbSemester);
-            String^ groupNum = this->txtGroup->Text;
-            String^ sectionNum = this->txtSection->Text;
+            String^ groupNum = this->txtGroup->Text->Trim();
+            String^ sectionNum = this->txtSection->Text->Trim();
 
-            if (sid <= 0 || String::IsNullOrWhiteSpace(fullName) || deptId == -1 || facultyId == -1 || levelId == -1 || yearId == -1 || semId == -1) {
-                MessageBox::Show("Please fill all required fields correctly.", "Validation", MessageBoxButtons::OK, MessageBoxIcon::Warning);
+            if (sid <= 0) {
+                MessageBox::Show("Please enter a valid Student ID.", "Validation", MessageBoxButtons::OK, MessageBoxIcon::Warning);
+                return;
+            }
+            if (String::IsNullOrWhiteSpace(fullName)) {
+                MessageBox::Show("Full Name is required.", "Validation", MessageBoxButtons::OK, MessageBoxIcon::Warning);
+                return;
+            }
+            if (deptId == -1 || facultyId == -1 || levelId == -1 || yearId == -1 || semId == -1) {
+                MessageBox::Show("Please select all academic fields.", "Validation", MessageBoxButtons::OK, MessageBoxIcon::Warning);
                 return;
             }
 
@@ -436,11 +444,17 @@ namespace SISDEMO {
             }
 
             bool ok = false;
-            if (editMode) {
-                ok = SIS::DataManager::UpdateStudent(sid, fullName, email, phone, nationalId, deptId, facultyId, levelId, yearId, semId, groupNum, sectionNum);
+            try {
+                if (editMode) {
+                    ok = SIS::DataManager::UpdateStudent(originalId, fullName, email, phone, nationalId, deptId, facultyId, levelId, yearId, semId, groupNum, sectionNum);
+                }
+                else {
+                    ok = SIS::DataManager::AddStudent(sid, user, pass, fullName, email, phone, nationalId, deptId, facultyId, levelId, yearId, semId, groupNum, sectionNum);
+                }
             }
-            else {
-                ok = SIS::DataManager::AddStudent(sid, user, pass, fullName, email, phone, nationalId, deptId, facultyId, levelId, yearId, semId, groupNum, sectionNum);
+            catch (Exception^ ex) {
+                MessageBox::Show("Database error: " + ex->Message, "Database Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+                return;
             }
 
             if (ok) {
@@ -451,16 +465,19 @@ namespace SISDEMO {
             }
         }
         catch (Exception^ ex) {
-            MessageBox::Show(String::Format("Error: {0}", ex->Message), "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+            MessageBox::Show(String::Format("Unexpected error: {0}", ex->Message), "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
         }
     }
 
     private:
         int GetIdFromCombo(ComboBox^ cmb) {
             if (cmb->SelectedIndex == -1) return -1;
-            String^ s = cmb->SelectedItem->ToString();
-            array<String^>^ p = s->Split(' ');
-            if (p->Length > 0) return Int32::Parse(p[0]);
+            try {
+                String^ s = cmb->SelectedItem->ToString();
+                array<String^>^ p = s->Split(' ');
+                int id;
+                if (p->Length > 0 && Int32::TryParse(p[0], id)) return id;
+            } catch (...) {}
             return -1;
         }
 

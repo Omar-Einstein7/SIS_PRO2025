@@ -215,6 +215,12 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config">
+      <Link>$(TargetFileName).config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
     <EmbeddedResource Include="AdminForm.resx">
       <DependentUpon>AdminForm.h</DependentUpon>
     </EmbeddedResource>

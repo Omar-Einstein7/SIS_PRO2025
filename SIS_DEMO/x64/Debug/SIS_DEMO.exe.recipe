@@ -2,7 +2,10 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>C:\Omar\NCT\2 yaer\Assignemnt 2\SIS_PRO12\x64\Debug\SIS_DEMO.exe</FullPath>
+      <FullPath>C:\Users\Omar Ahmed\Documents\SIS_PRO2025\x64\Debug\SIS_DEMO.exe</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
+      <FullPath>C:\Users\Omar Ahmed\Documents\SIS_PRO2025\SIS_DEMO\x64\Debug\SIS_DEMO.exe.config</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />
